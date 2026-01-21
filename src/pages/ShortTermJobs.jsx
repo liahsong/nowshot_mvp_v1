@@ -6,7 +6,7 @@ import { Badge } from "../components/ui/badge";
 import { supabase } from "../lib/supabase";
 import { MapPin, Clock, Search, Briefcase } from "lucide-react";
 import { format } from "date-fns";
-import ko from "date-fns/locale/ko";
+import { ko } from "date-fns/locale";
 import { motion } from "framer-motion";
 
 const normalizePeriod = (value) => {
