@@ -51,6 +51,9 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+        <p className="text-xs text-gray-400 mb-4">
+          영문 대·소문자와 숫자를 포함해 6자 이상 입력해 주세요.
+        </p>
 
         <button
           onClick={handleLogin}
