@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../lib/supabase";
+import { getSupabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import SplitLayout from "../../components/SplitLayout";
 import { Badge } from "../../components/ui/badge";
@@ -53,6 +53,7 @@ const formatWorkDate = (post) => {
 };
 
 export default function JobList() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [authUser, setAuthUser] = useState(null);

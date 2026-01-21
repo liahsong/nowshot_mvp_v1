@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { supabase } from "../../lib/supabase";
+import { getSupabase } from "../../lib/supabase";
 import { loadKakaoSdk, geocodeAddress } from "../../lib/kakao";
 import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
@@ -51,6 +51,7 @@ const uploadFile = async (bucket, userId, file, folder) => {
 };
 
 export default function OwnerOnboarding() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);

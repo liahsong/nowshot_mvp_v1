@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SplitLayout from "../components/SplitLayout";
 import { Badge } from "../components/ui/badge";
-import { supabase } from "../lib/supabase";
+import { getSupabase } from "../lib/supabase";
 import {
   ArrowLeft,
   Briefcase,
@@ -26,6 +26,7 @@ const statusStyle = {
 };
 
 export default function BaristaApplications() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
   const [posts, setPosts] = useState([]);

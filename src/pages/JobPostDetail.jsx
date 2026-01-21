@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import SplitLayout from "../components/SplitLayout";
-import { supabase } from "../lib/supabase";
+import { getSupabase } from "../lib/supabase";
 import { Badge } from "../components/ui/badge";
 import {
   ArrowLeft,
@@ -21,6 +21,7 @@ const BENEFIT_LABELS = {
 };
 
 export default function JobPostDetail() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const { id } = useParams();
   const [post, setPost] = useState(null);

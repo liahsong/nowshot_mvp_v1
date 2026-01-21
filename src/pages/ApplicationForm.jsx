@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { getSupabase } from "../lib/supabase";
 import { toast } from "../components/ui/use-toast";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -8,6 +8,7 @@ import { Textarea } from "../components/ui/textarea";
 import { ArrowLeft, Loader2, FileCheck } from "lucide-react";
 
 export default function ApplicationForm() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const { id } = useParams();
   const [loading, setLoading] = useState(false);

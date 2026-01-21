@@ -4,10 +4,11 @@ import { ArrowLeft, ChevronRight, LogOut, Store, User } from "lucide-react";
 import { motion } from "framer-motion";
 import SplitLayout from "../../components/SplitLayout";
 import { Button } from "../../components/ui/button";
-import { supabase } from "../../lib/supabase";
+import { getSupabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function OwnerMyPage() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const { user } = useAuth();
 

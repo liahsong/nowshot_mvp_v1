@@ -1,9 +1,10 @@
 // src/pages/auth/Login.jsx
 import { useState } from "react";
-import { supabase } from "../../lib/supabase";
+import { getSupabase } from "../../lib/supabase";
 import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
+  const supabase = getSupabase();
   const navigate = useNavigate("/",{replace: true});
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

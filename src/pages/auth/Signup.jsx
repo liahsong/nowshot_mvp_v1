@@ -1,8 +1,9 @@
 // src/pages/auth/Signup.jsx
 import { useState } from "react";
-import { supabase } from "../../lib/supabase";
+import { getSupabase } from "../../lib/supabase";
 
 export default function SignupPage() {
+  const supabase = getSupabase();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [sent, setSent] = useState(false);

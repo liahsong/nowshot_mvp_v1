@@ -17,7 +17,7 @@ import { Label } from "../../components/ui/label";
 import { Textarea } from "../../components/ui/textarea";
 import PhotoUploader from "../../components/ui/PhotoUploader";
 import SkillBadge from "../../components/ui/SkillBadge";
-import { supabase } from "../../lib/supabase";
+import { getSupabase } from "../../lib/supabase";
 import { getSignedUrl } from "../../lib/storage";
 import { useAuth } from "../../contexts/AuthContext";
 import { resizeImageFile } from "../../utils/resizeImage";
@@ -269,6 +269,7 @@ const uploadFile = async (bucket, userId, file, folder) => {
 };
 
 export default function BaristaProfileEdit() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();

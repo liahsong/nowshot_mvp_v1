@@ -9,10 +9,11 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { supabase } from "../lib/supabase";
+import { getSupabase } from "../lib/supabase";
 import { getSignedUrl } from "../lib/storage";
 
 export default function ApplicationList() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const postId = searchParams.get("postId");

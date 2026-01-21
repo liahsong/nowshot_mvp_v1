@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Loader2, User as UserIcon } from "lucide-react";
-import { supabase } from "../../lib/supabase";
+import { getSupabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import { loadKakaoSdk, geocodeAddress } from "../../lib/kakao";
 import { Input } from "../../components/ui/input";
@@ -39,6 +39,7 @@ const BUCKETS = {
 };
 
 export default function BaristaOnboarding() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const { refetchProfile } = useAuth();
   const [step, setStep] = useState(1);

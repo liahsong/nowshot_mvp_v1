@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { supabase } from "../../lib/supabase";
+import { getSupabase } from "../../lib/supabase";
 import SplitLayout from "../../components/SplitLayout";
 import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
@@ -29,6 +29,7 @@ const BENEFITS = [
 ];
 
 export default function JobEdit() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const { id } = useParams();
   const [loading, setLoading] = useState(false);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { getSupabase } from "../lib/supabase";
 import { getSignedUrl } from "../lib/storage";
 import { Badge } from "../components/ui/badge";
 import { Textarea } from "../components/ui/textarea";
@@ -8,6 +8,7 @@ import { ArrowLeft, MapPin, Phone } from "lucide-react";
 import SplitLayout from "../components/SplitLayout";
 
 export default function ApplicationDetail() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const { id } = useParams();
   const [application, setApplication] = useState(null);

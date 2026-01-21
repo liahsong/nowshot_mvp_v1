@@ -7,7 +7,7 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Textarea } from "../../components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
-import { supabase } from "../../lib/supabase";
+import { getSupabase } from "../../lib/supabase";
 import { getSignedUrl } from "../../lib/storage";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "../../components/ui/use-toast";
@@ -44,6 +44,7 @@ const calculateAge = (birthDate) => {
 };
 
 export default function BaristaDetail() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const { applicationId } = useParams();
   const [searchParams] = useSearchParams();

@@ -17,7 +17,7 @@ import {
 } from "../../components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import PhotoUploader from "../../components/ui/PhotoUploader";
-import { supabase } from "../../lib/supabase";
+import { getSupabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "../../components/ui/use-toast";
 
@@ -63,6 +63,7 @@ const normalizeCafePhotos = (photos) => {
 };
 
 export default function CafeManage() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();

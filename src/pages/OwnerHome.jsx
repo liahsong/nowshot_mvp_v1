@@ -16,7 +16,7 @@ import { format } from "date-fns";
 import ko from "date-fns/locale/ko";
 import { motion } from "framer-motion";
 import SplitLayout from "../components/SplitLayout";
-import { supabase } from "../lib/supabase";
+import { getSupabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 
 const statusLabel = {
@@ -41,6 +41,7 @@ const formatWorkDate = (post) => {
 };
 
 export default function OwnerHome() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const { user } = useAuth();
 

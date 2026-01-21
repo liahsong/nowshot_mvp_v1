@@ -1,10 +1,11 @@
 import { ArrowRight } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { getSupabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { useEffect, useState } from "react";
 
 export default function RoleSelect() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const { user, role, onboardingCompleted, loading: authLoading, refetchProfile } =
     useAuth();

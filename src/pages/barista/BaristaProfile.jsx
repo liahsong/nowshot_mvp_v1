@@ -8,7 +8,7 @@ import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
 import SkillBadge from "../../components/ui/SkillBadge";
-import { supabase } from "../../lib/supabase";
+import { getSupabase } from "../../lib/supabase";
 import { getSignedUrl } from "../../lib/storage";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -232,6 +232,7 @@ const parseCareerSummary = (value) => {
 };
 
 export default function BaristaProfile() {
+  const supabase = getSupabase();
   const { user } = useAuth();
   const navigate = useNavigate();
 

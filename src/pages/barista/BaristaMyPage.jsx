@@ -16,11 +16,12 @@ import {
   User,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { supabase } from "../../lib/supabase";
+import { getSupabase } from "../../lib/supabase";
 import { getSignedUrl } from "../../lib/storage";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function BaristaMyPage() {
+  const supabase = getSupabase();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");

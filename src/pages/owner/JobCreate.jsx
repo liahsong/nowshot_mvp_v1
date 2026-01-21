@@ -16,7 +16,7 @@ import SkillBadge from "../../components/ui/SkillBadge";
 import { ArrowLeft, Loader2, Store, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import SplitLayout from "../../components/SplitLayout";
-import { supabase } from "../../lib/supabase";
+import { getSupabase } from "../../lib/supabase";
 import { loadKakaoSdk, geocodeAddress } from "../../lib/kakao";
 import { toast } from "../../components/ui/use-toast";
 
@@ -39,6 +39,7 @@ const BENEFITS = [
 ];
 
 export default function JobCreate() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);

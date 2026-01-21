@@ -6,7 +6,7 @@ import SplitLayout from "../../components/SplitLayout";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { MapPin, User as UserIcon, ChevronRight, Star, ArrowLeft } from "lucide-react";
-import { supabase } from "../../lib/supabase";
+import { getSupabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import { getSignedUrl } from "../../lib/storage";
 
@@ -30,6 +30,7 @@ const calculateAge = (birthDate) => {
 };
 
 export default function BaristaManagement() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [profileMap, setProfileMap] = useState({});

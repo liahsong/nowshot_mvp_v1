@@ -1,10 +1,11 @@
 // src/contexts/AuthContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
+import { getSupabase } from "../lib/supabase";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const supabase = getSupabase();
   const [user, setUser] = useState(null);
   const [role, setRole] = useState("pending");
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);

@@ -4,7 +4,7 @@ import SplitLayout from "../components/SplitLayout";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
-import { supabase } from "../lib/supabase";
+import { getSupabase } from "../lib/supabase";
 import { getSignedUrl } from "../lib/storage";
 import {
   MapPin,
@@ -37,6 +37,7 @@ const getDistanceKm = (lat1, lng1, lat2, lng2) => {
 };
 
 export default function BaristaHome() {
+  const supabase = getSupabase();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");

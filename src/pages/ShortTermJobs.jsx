@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import SplitLayout from "../components/SplitLayout";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
-import { supabase } from "../lib/supabase";
+import { getSupabase } from "../lib/supabase";
 import { MapPin, Clock, Search, Briefcase } from "lucide-react";
 import { format } from "date-fns";
 import ko from "date-fns/locale/ko";
@@ -20,6 +20,7 @@ const normalizePeriod = (value) => {
 };
 
 export default function ShortTermJobs() {
+  const supabase = getSupabase();
   const [user, setUser] = useState(null);
   const [jobPosts, setJobPosts] = useState([]);
   const [applications, setApplications] = useState([]);

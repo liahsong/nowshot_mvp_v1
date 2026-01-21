@@ -1,19 +1,27 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL ?? "").trim();
-const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? "").trim();
+let cachedClient = null;
 
-const hasSupabaseUrl = supabaseUrl.length > 0;
-const hasSupabaseKey = supabaseAnonKey.length > 0;
+export function getSupabase() {
+  if (cachedClient) return cachedClient;
 
-if (import.meta.env.DEV) {
-  console.log("SUPABASE URL:", supabaseUrl);
-  console.log("SUPABASE KEY:", hasSupabaseKey ? "present" : "missing");
-  if (!hasSupabaseUrl || !hasSupabaseKey) {
-    console.error(
-      "Supabase env missing. Check VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY."
-    );
+  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL ?? "").trim();
+  const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? "").trim();
+
+  if (import.meta.env.DEV) {
+    console.log("SUPABASE URL:", supabaseUrl);
+    console.log("SUPABASE KEY:", supabaseAnonKey ? "present" : "missing");
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error(
+        "Supabase env missing. Check VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY."
+      );
+    }
   }
-}
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Supabase env missing at runtime");
+  }
+
+  cachedClient = createClient(supabaseUrl, supabaseAnonKey);
+  return cachedClient;
+}

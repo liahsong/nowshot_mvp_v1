@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import SplitLayout from "../../components/SplitLayout";
-import { supabase } from "../../lib/supabase";
+import { getSupabase } from "../../lib/supabase";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import {
@@ -36,6 +36,7 @@ const BENEFIT_LABELS = {
 };
 
 export default function JobManage() {
+  const supabase = getSupabase();
   const navigate = useNavigate();
   const { id } = useParams();
   const [job, setJob] = useState(null);
