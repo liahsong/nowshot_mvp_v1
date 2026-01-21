@@ -16,7 +16,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { format, isSameDay } from "date-fns";
-import { ko } from "date-fns/locale";
+import ko from "date-fns/locale/ko";
 import { motion } from "framer-motion";
 import DateFilter from "./filters/DateFilter";
 import DetailedFilters from "./filters/DetailedFilters";

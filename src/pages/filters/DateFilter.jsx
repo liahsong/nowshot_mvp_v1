@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { format, addDays, isToday, isSameDay } from "date-fns";
-import { ko } from "date-fns/locale";
+import ko from "date-fns/locale/ko";
 
 export default function DateFilter({
   selectedDate,
