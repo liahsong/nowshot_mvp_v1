@@ -28,33 +28,53 @@ export function AuthProvider({ children }) {
       console.warn("Profile fetch error:", error);
     }
 
-    if (data?.role && data.role !== "pending") {
-      setRole(data.role ?? "pending");
-      setOnboardingCompleted(Boolean(data.onboarding_completed));
-      return;
+    const normalizedRole = data?.role ?? "pending";
+    const hasResolvedRole = normalizedRole === "owner" || normalizedRole === "barista";
+
+    if (hasResolvedRole) {
+      const profileCompleted = Boolean(data?.onboarding_completed);
+      if (profileCompleted) {
+        setRole(normalizedRole);
+        setOnboardingCompleted(true);
+        return;
+      }
     }
 
-    const { data: ownerProfile } = await supabase
-      .from("owner_profiles")
-      .select("onboarding_completed, profile_completed")
-      .eq("user_id", userId)
-      .maybeSingle();
+    const fetchOwnerProfile = async () => {
+      const { data: ownerProfile } = await supabase
+        .from("owner_profiles")
+        .select("onboarding_completed, profile_completed")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!ownerProfile) return null;
+      return ownerProfile;
+    };
 
+    const fetchBaristaProfile = async () => {
+      const { data: baristaProfile } = await supabase
+        .from("barista_profiles")
+        .select("profile_completed")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!baristaProfile) return null;
+      return baristaProfile;
+    };
+
+    const ownerFirst = normalizedRole !== "barista";
+
+    const ownerProfile = ownerFirst ? await fetchOwnerProfile() : null;
     if (ownerProfile) {
-      setRole("owner");
-      setOnboardingCompleted(
-        Boolean(
-          ownerProfile.onboarding_completed ?? ownerProfile.profile_completed
-        )
+      const completed = Boolean(
+        ownerProfile.onboarding_completed ?? ownerProfile.profile_completed
       );
+      setRole("owner");
+      setOnboardingCompleted(completed);
       await supabase.from("profiles").upsert(
         {
           id: userId,
           email: currentUser?.email ?? null,
           role: "owner",
-          onboarding_completed: Boolean(
-            ownerProfile.onboarding_completed ?? ownerProfile.profile_completed
-          ),
+          onboarding_completed: completed,
           updated_at: new Date(),
         },
         { onConflict: "id" }
@@ -62,21 +82,17 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    const { data: baristaProfile } = await supabase
-      .from("barista_profiles")
-      .select("profile_completed")
-      .eq("user_id", userId)
-      .maybeSingle();
-
+    const baristaProfile = await fetchBaristaProfile();
     if (baristaProfile) {
+      const completed = Boolean(baristaProfile.profile_completed);
       setRole("barista");
-      setOnboardingCompleted(Boolean(baristaProfile.profile_completed));
+      setOnboardingCompleted(completed);
       await supabase.from("profiles").upsert(
         {
           id: userId,
           email: currentUser?.email ?? null,
           role: "barista",
-          onboarding_completed: Boolean(baristaProfile.profile_completed),
+          onboarding_completed: completed,
           updated_at: new Date(),
         },
         { onConflict: "id" }
@@ -84,7 +100,30 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    setRole("pending");
+    if (!ownerFirst) {
+      const fallbackOwner = await fetchOwnerProfile();
+      if (fallbackOwner) {
+        const completed = Boolean(
+          fallbackOwner.onboarding_completed ??
+            fallbackOwner.profile_completed
+        );
+        setRole("owner");
+        setOnboardingCompleted(completed);
+        await supabase.from("profiles").upsert(
+          {
+            id: userId,
+            email: currentUser?.email ?? null,
+            role: "owner",
+            onboarding_completed: completed,
+            updated_at: new Date(),
+          },
+          { onConflict: "id" }
+        );
+        return;
+      }
+    }
+
+    setRole(hasResolvedRole ? normalizedRole : "pending");
     setOnboardingCompleted(false);
   };
 
