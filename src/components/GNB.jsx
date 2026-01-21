@@ -229,36 +229,6 @@ export default function GNB() {
                 </button>
                 <button
                   onClick={() => {
-                    navigate("/owner/jobs");
-                    setIsSidebarOpen(false);
-                  }}
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-left text-gray-700 hover:bg-gray-50"
-                >
-                  <FileText className="w-5 h-5 text-gray-400" />
-                  공고 관리
-                </button>
-                <button
-                  onClick={() => {
-                    navigate("/owner/applicants");
-                    setIsSidebarOpen(false);
-                  }}
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-left text-gray-700 hover:bg-gray-50"
-                >
-                  <FileText className="w-5 h-5 text-gray-400" />
-                  지원자 목록
-                </button>
-                <button
-                  onClick={() => {
-                    navigate("/owner/baristas");
-                    setIsSidebarOpen(false);
-                  }}
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-left text-gray-700 hover:bg-gray-50"
-                >
-                  <FileText className="w-5 h-5 text-gray-400" />
-                  바리스타 관리
-                </button>
-                <button
-                  onClick={() => {
                     navigate("/about");
                     setIsSidebarOpen(false);
                   }}
