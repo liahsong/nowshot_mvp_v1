@@ -15,7 +15,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
 import PhotoUploader from "../../components/ui/PhotoUploader";
 import { getSupabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
@@ -24,9 +30,9 @@ import { toast } from "../../components/ui/use-toast";
 const CAFE_TYPES = ["개인카페", "프랜차이즈", "로스터리", "베이커리"];
 const BUCKETS = { cafe: "cafe_photos" };
 
-const uploadFile = async (bucket, userId, file, folder) => {
+const uploadFile = async (supabase, bucket, cafeId, file, folder) => {
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const path = `${userId}/${folder}/${Date.now()}_${safeName}`;
+  const path = `${cafeId}/${folder}/${Date.now()}_${safeName}`;
   const { error: uploadError } = await supabase.storage
     .from(bucket)
     .upload(path, file, {
@@ -165,6 +171,27 @@ export default function CafeManage() {
     if (!user?.id) return;
     setUploadFailed(false);
 
+    let targetCafeId = editingCafe?.id ?? null;
+    if (!targetCafeId) {
+      const { data: newCafe, error: createError } = await supabase
+        .from("cafes")
+        .insert({
+          owner_id: user.id,
+          name: formData.name,
+          address: formData.address,
+          cafe_type: formData.cafe_type || null,
+          description: formData.description || null,
+          photos: [],
+        })
+        .select("id")
+        .single();
+      if (createError) {
+        console.error(createError);
+        return;
+      }
+      targetCafeId = newCafe?.id ?? null;
+    }
+
     const photoUrls = [];
     let uploadFailed = false;
     for (const item of formData.photos) {
@@ -172,7 +199,13 @@ export default function CafeManage() {
       if (item.file) {
         try {
           photoUrls.push(
-            await uploadFile(BUCKETS.cafe, user.id, item.file, "cafe")
+            await uploadFile(
+              supabase,
+              BUCKETS.cafe,
+              targetCafeId,
+              item.file,
+              "cafe"
+            )
           );
         } catch (err) {
           console.warn("Cafe photo upload failed:", err);
@@ -208,13 +241,16 @@ export default function CafeManage() {
         title: "사진 업로드 실패",
         description: "일부 사진 업로드에 실패했습니다. 다시 시도해주세요.",
       });
+      if (!editingCafe && targetCafeId) {
+        await supabase.from("cafes").delete().eq("id", targetCafeId);
+      }
       return;
     }
 
     if (editingCafe) {
       updateMutation.mutate({ id: editingCafe.id, payload });
-    } else {
-      createMutation.mutate(payload);
+    } else if (targetCafeId) {
+      updateMutation.mutate({ id: targetCafeId, payload });
     }
   };
 
@@ -348,6 +384,9 @@ export default function CafeManage() {
                 <DialogTitle>
                   {editingCafe ? "카페 수정" : "카페 추가"}
                 </DialogTitle>
+                <DialogDescription className="text-sm text-gray-500">
+                  카페 정보를 입력하고 사진을 업로드하세요.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div>
@@ -462,6 +501,9 @@ export default function CafeManage() {
             <DialogContent className="rounded-2xl">
               <DialogHeader>
                 <DialogTitle>카페 삭제</DialogTitle>
+                <DialogDescription className="text-sm text-gray-500">
+                  삭제하면 카페 정보와 사진을 복구할 수 없습니다.
+                </DialogDescription>
               </DialogHeader>
               <div className="text-sm text-gray-600">
                 선택한 카페를 삭제할까요? 삭제 후 복구할 수 없습니다.

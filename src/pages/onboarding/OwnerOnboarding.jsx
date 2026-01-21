@@ -34,9 +34,9 @@ const SKILLS = [
 const CAFE_TYPES = ["개인카페", "프랜차이즈", "로스터리", "베이커리"];
 const BUCKETS = { cafe: "cafe_photos" };
 
-const uploadFile = async (bucket, userId, file, folder) => {
+const uploadFile = async (supabase, bucket, cafeId, file, folder) => {
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const path = `${userId}/${folder}/${Date.now()}_${safeName}`;
+  const path = `${cafeId}/${folder}/${Date.now()}_${safeName}`;
   const { error: uploadError } = await supabase.storage
     .from(bucket)
     .upload(path, file, {
@@ -147,13 +147,35 @@ export default function OwnerOnboarding() {
         }
       }
 
+      const cafePayload = {
+        owner_id: user.id,
+        name: cafeData.cafe_name,
+        address: cafeData.address,
+        cafe_type: cafeData.cafe_type || null,
+        description: cafeData.atmosphere_description || null,
+      };
+
+      const { data: cafeRow, error: insertError } = await supabase
+        .from("cafes")
+        .insert(cafePayload)
+        .select("id")
+        .single();
+
+      if (insertError) throw insertError;
+
       const photoUrls = [];
-      if (cafeData.photos.length > 0) {
+      if (cafeRow?.id && cafeData.photos.length > 0) {
         for (const item of cafeData.photos) {
           if (!item.file) continue;
           try {
             photoUrls.push(
-              await uploadFile(BUCKETS.cafe, user.id, item.file, "cafe")
+              await uploadFile(
+                supabase,
+                BUCKETS.cafe,
+                cafeRow.id,
+                item.file,
+                "cafe"
+              )
             );
           } catch (err) {
             console.warn("Cafe photo upload failed:", err);
@@ -161,20 +183,13 @@ export default function OwnerOnboarding() {
         }
       }
 
-      const cafePayload = {
-        owner_id: user.id,
-        name: cafeData.cafe_name,
-        address: cafeData.address,
-        cafe_type: cafeData.cafe_type || null,
-        description: cafeData.atmosphere_description || null,
-        photos: photoUrls,
-      };
-
-      const { error: insertError } = await supabase
-        .from("cafes")
-        .insert(cafePayload);
-
-      if (insertError) throw insertError;
+      if (cafeRow?.id) {
+        const { error: updateError } = await supabase
+          .from("cafes")
+          .update({ photos: photoUrls })
+          .eq("id", cafeRow.id);
+        if (updateError) throw updateError;
+      }
 
       const { error: ownerFlagError } = await supabase
         .from("owner_profiles")
