@@ -40,6 +40,41 @@ const formatWorkDate = (post) => {
   return "일정 미정";
 };
 
+const normalizeCafePhotos = (photos) => {
+  if (!photos) return [];
+  if (Array.isArray(photos)) {
+    return photos
+      .map((item) => {
+        if (!item) return null;
+        if (typeof item === "string") return item;
+        return item.url || item.publicUrl || null;
+      })
+      .filter(Boolean);
+  }
+  if (typeof photos === "string") {
+    const trimmed = photos.trim();
+    if ((trimmed.startsWith("[") && trimmed.endsWith("]")) || trimmed.startsWith("{")) {
+      try {
+        return normalizeCafePhotos(JSON.parse(trimmed));
+      } catch (err) {
+        return trimmed ? [trimmed] : [];
+      }
+    }
+    return trimmed ? [trimmed] : [];
+  }
+  if (typeof photos === "object") {
+    if (Array.isArray(photos.urls)) return photos.urls.filter(Boolean);
+    return [photos.url || photos.publicUrl].filter(Boolean);
+  }
+  return [];
+};
+
+const getCafeImage = (photos) => {
+  const list = normalizeCafePhotos(photos);
+  if (!list.length) return null;
+  return list[0];
+};
+
 export default function OwnerHome() {
   const supabase = getSupabase();
   const navigate = useNavigate();
@@ -263,25 +298,7 @@ export default function OwnerHome() {
                     className="flex-shrink-0 w-32 bg-white rounded-xl p-3 shadow-sm"
                   >
                     {(() => {
-                      const photos = cafe.photos;
-                      let imageUrl = null;
-                      if (Array.isArray(photos)) {
-                        const first = photos[0];
-                        if (typeof first === "string") {
-                          imageUrl = first;
-                        } else {
-                          imageUrl = first?.url || first?.publicUrl || null;
-                        }
-                      } else if (typeof photos === "string") {
-                        imageUrl = photos;
-                      } else if (photos && typeof photos === "object") {
-                        if (Array.isArray(photos.urls)) {
-                          imageUrl = photos.urls[0] || null;
-                        } else {
-                          imageUrl = photos.url || photos.publicUrl || null;
-                        }
-                      }
-
+                      const imageUrl = getCafeImage(cafe.photos);
                       if (imageUrl) {
                         return (
                           <img
@@ -307,12 +324,16 @@ export default function OwnerHome() {
                   </div>
                 ))}
                 {cafes.length < 5 && (
-                  <div className="flex-shrink-0 w-32 h-[120px] bg-gray-100 rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-gray-300">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/owner/cafes")}
+                    className="flex-shrink-0 w-32 h-[120px] bg-gray-100 rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-gray-300 hover:border-[#1FBECC]/70 hover:text-[#1FBECC] transition"
+                  >
                     <Plus className="w-6 h-6 text-gray-400" />
                     <span className="text-xs text-gray-500 mt-1">
                       카페 추가
                     </span>
-                  </div>
+                  </button>
                 )}
               </div>
             </div>
