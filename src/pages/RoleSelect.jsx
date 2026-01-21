@@ -2,13 +2,26 @@ import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function RoleSelect() {
   const navigate = useNavigate();
-  const { refetchProfile } = useAuth();
+  const { user, role, onboardingCompleted, loading: authLoading, refetchProfile } =
+    useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) return;
+    if (role && role !== "pending" && role !== "member") {
+      if (onboardingCompleted) {
+        navigate(`/${role}`, { replace: true });
+      } else {
+        navigate(`/onboarding/${role}`, { replace: true });
+      }
+    }
+  }, [authLoading, user, role, onboardingCompleted, navigate]);
 
   const withTimeout = (promise, ms) =>
     new Promise((resolve, reject) => {
