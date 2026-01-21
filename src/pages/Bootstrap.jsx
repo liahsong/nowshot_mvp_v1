@@ -1,6 +1,6 @@
 // pages/Bootstrap.jsx
 import { useEffect, useState } from 'react'
-import { supabase } from '@/supabase'
+import { getSupabase } from '@/lib/supabase'
 import { useNavigate } from 'react-router-dom'
 
 export default function Bootstrap() {
@@ -9,6 +9,8 @@ export default function Bootstrap() {
 
   useEffect(() => {
     const run = async () => {
+      const supabase = getSupabase() // ✅ 여기서 생성
+
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -59,7 +61,7 @@ export default function Bootstrap() {
     }
 
     run().finally(() => setLoading(false))
-  }, [])
+  }, [navigate])
 
   if (loading) return <div>로딩중...</div>
 
