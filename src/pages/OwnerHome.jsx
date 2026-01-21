@@ -13,7 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { format } from "date-fns";
-import  ko from "date-fns/locale/ko";
+import ko from "date-fns/locale/ko";
 import { motion } from "framer-motion";
 import SplitLayout from "../components/SplitLayout";
 import { supabase } from "../lib/supabase";
