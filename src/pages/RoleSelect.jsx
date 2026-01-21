@@ -1,5 +1,5 @@
 import { ArrowRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { useEffect, useState } from "react";
@@ -12,8 +12,7 @@ export default function RoleSelect() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) return;
+    if (authLoading || !user) return;
     if (role && role !== "pending" && role !== "member") {
       if (onboardingCompleted) {
         navigate(`/${role}`, { replace: true });
@@ -22,6 +21,23 @@ export default function RoleSelect() {
       }
     }
   }, [authLoading, user, role, onboardingCompleted, navigate]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        로딩 중…
+      </div>
+    );
+  }
+
+  if (user && role && role !== "pending" && role !== "member") {
+    return (
+      <Navigate
+        to={onboardingCompleted ? `/${role}` : `/onboarding/${role}`}
+        replace
+      />
+    );
+  }
 
   const withTimeout = (promise, ms) =>
     new Promise((resolve, reject) => {
