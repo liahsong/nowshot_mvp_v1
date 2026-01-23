@@ -307,7 +307,7 @@ export default function CafeManage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -100 }}
                   transition={{ delay: index * 0.05 }}
-                  className="bg-white rounded-2xl p-4 shadow-sm"
+                  className="relative bg-white rounded-2xl p-4 shadow-sm"
                 >
                   <div className="flex gap-4">
                     {cover ? (
@@ -321,36 +321,36 @@ export default function CafeManage() {
                         <Store className="w-8 h-8 text-gray-400" />
                       </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
-                            {cafe.name}
-                          </h3>
-                          <p className="text-sm text-gray-500 truncate">
-                            {cafe.address}
-                          </p>
-                          {cafe.cafe_type && (
-                            <span className="text-xs text-[#1FBECC]">
-                              {cafe.cafe_type}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => openEditDialog(cafe)}
-                            className="p-2 hover:bg-gray-100 rounded-lg"
-                          >
-                            <Edit2 className="w-4 h-4 text-gray-400" />
-                          </button>
-                          <button
-                            onClick={() => setDeleteTarget(cafe)}
-                            className="p-2 hover:bg-red-50 rounded-lg"
-                          >
-                            <Trash2 className="w-4 h-4 text-red-400" />
-                          </button>
-                        </div>
+                    <div className="flex-1 min-w-0 pr-12">
+                      <div>
+                        <h3 className="font-semibold text-gray-900 leading-snug line-clamp-2">
+                          {cafe.name}
+                        </h3>
+                        <p className="text-sm text-gray-500 truncate">
+                          {cafe.address}
+                        </p>
+                        {cafe.cafe_type && (
+                          <span className="text-xs text-[#1FBECC]">
+                            {cafe.cafe_type}
+                          </span>
+                        )}
                       </div>
+                    </div>
+                    <div className="absolute top-3 right-3 flex gap-1">
+                      <button
+                        onClick={() => openEditDialog(cafe)}
+                        className="p-2 hover:bg-gray-100 rounded-lg"
+                        aria-label="카페 수정"
+                      >
+                        <Edit2 className="w-4 h-4 text-gray-400" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteTarget(cafe)}
+                        className="p-2 hover:bg-red-50 rounded-lg"
+                        aria-label="카페 삭제"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-400" />
+                      </button>
                     </div>
                   </div>
                 </motion.div>
@@ -377,8 +377,8 @@ export default function CafeManage() {
 
           <Dialog open={showDialog} onOpenChange={(open) => !open && resetForm()}>
             <DialogContent
-              overlayClassName="bg-white/95"
-              className="rounded-2xl max-h-[90vh] overflow-y-auto"
+              overlayClassName="bg-black/40"
+              className="rounded-2xl max-h-[90vh] overflow-y-auto bg-white"
             >
               <DialogHeader>
                 <DialogTitle>
@@ -498,17 +498,22 @@ export default function CafeManage() {
               if (!open) setDeleteTarget(null);
             }}
           >
-            <DialogContent className="rounded-2xl">
+            <DialogContent className="rounded-2xl max-w-sm bg-white">
               <DialogHeader>
                 <DialogTitle>카페 삭제</DialogTitle>
                 <DialogDescription className="text-sm text-gray-500">
                   삭제하면 카페 정보와 사진을 복구할 수 없습니다.
                 </DialogDescription>
               </DialogHeader>
-              <div className="text-sm text-gray-600">
-                선택한 카페를 삭제할까요? 삭제 후 복구할 수 없습니다.
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
+                  <Trash2 className="w-5 h-5 text-red-500" />
+                </div>
+                <div className="text-sm text-gray-600">
+                  선택한 카페를 삭제할까요?
+                </div>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-3 mt-2">
                 <Button
                   variant="outline"
                   onClick={() => setDeleteTarget(null)}
