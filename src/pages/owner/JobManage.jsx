@@ -20,6 +20,8 @@ const statusLabel = {
   open: "모집중",
   closed: "마감",
   completed: "완료",
+  pending: "대기",
+  hired: "채용확정",
 };
 
 const statusStyle = {
@@ -44,6 +46,7 @@ export default function JobManage() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("open");
+  const [selectedApplicantId, setSelectedApplicantId] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -87,6 +90,10 @@ export default function JobManage() {
 
   const pendingCount = useMemo(
     () => applications.filter((app) => app.status === "pending").length,
+    [applications]
+  );
+  const hasHired = useMemo(
+    () => applications.some((app) => app.status === "hired"),
     [applications]
   );
   const [confirmingId, setConfirmingId] = useState(null);
@@ -134,6 +141,7 @@ export default function JobManage() {
           app.id === applicationId ? { ...app, status: "hired" } : app
         )
       );
+      setSelectedApplicantId(applicationId);
       setStatus("closed");
       setJob((prev) => (prev ? { ...prev, status: "closed" } : prev));
     } catch (err) {
@@ -464,6 +472,25 @@ export default function JobManage() {
                       <Link to={`/owner/applicants/${app.id}`}>
                         <div className="flex items-center justify-between rounded-xl border border-gray-100 p-3 hover:border-gray-200">
                           <div className="flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.preventDefault();
+                                if (hasHired) return;
+                                setSelectedApplicantId(app.id);
+                              }}
+                              disabled={hasHired}
+                              className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                                selectedApplicantId === app.id
+                                  ? "border-[#1FBECC] bg-[#1FBECC]/10"
+                                  : "border-gray-300 bg-white"
+                              } ${hasHired ? "opacity-40" : ""}`}
+                              aria-label="지원자 선택"
+                            >
+                              {selectedApplicantId === app.id && (
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#1FBECC]" />
+                              )}
+                            </button>
                             <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm font-semibold">
                               {app.barista_name?.[0] || "?"}
                             </div>
@@ -496,7 +523,11 @@ export default function JobManage() {
                         ) : (
                           <Button
                             className="h-9 px-4 rounded-full text-sm bg-[#1FBECC] hover:bg-[#1AABB8] text-white"
-                            disabled={confirmingId === app.id}
+                            disabled={
+                              confirmingId === app.id ||
+                              hasHired ||
+                              selectedApplicantId !== app.id
+                            }
                             onClick={() => handleConfirmHire(app.id)}
                           >
                             {confirmingId === app.id ? "처리 중..." : "채용 확정"}
