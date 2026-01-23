@@ -422,6 +422,14 @@ export default function JobManage() {
                   </p>
                 </div>
               )}
+
+              <div className="bg-amber-50 rounded-xl p-4 flex gap-3">
+                <FileCheck className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                <div className="text-sm text-amber-700">
+                  <p className="font-medium mb-1">보건증 필참</p>
+                  <p className="text-amber-600">지원 전 준비해주세요.</p>
+                </div>
+              </div>
             </div>
 
             <div className="bg-white rounded-2xl p-5 shadow-sm">
