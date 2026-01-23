@@ -147,7 +147,8 @@ export default function GNB() {
                 <img
                   src="/images/main_logo.png"
                   alt="NOWSHOT"
-                  className="h-8 object-contain"
+                  className="h-6 md:h-4 object-contain"
+
                 />
               </button>
 
