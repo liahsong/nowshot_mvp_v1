@@ -51,8 +51,9 @@ export default function BaristaHome() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [showDetailedFilters, setShowDetailedFilters] = useState(false);
   const [detailedFilters, setDetailedFilters] = useState({
-    distance: 15,
-    hourlyWage: [10320, 25000],
+    maxDistanceKm: 15,
+    minWage: 10320,
+    maxWage: 20000,
     startTime: null,
     endTime: null,
   });
@@ -213,17 +214,12 @@ export default function BaristaHome() {
     }
 
     const maxDistance =
-      typeof detailedFilters.distance === "number"
-        ? detailedFilters.distance
-        : detailedFilters.distance?.[1];
-    const minDistance =
-      typeof detailedFilters.distance === "number"
-        ? 1
-        : detailedFilters.distance?.[0];
+      typeof detailedFilters.maxDistanceKm === "number"
+        ? detailedFilters.maxDistanceKm
+        : 15;
     if (
       profile?.lat &&
       profile?.lng &&
-      minDistance !== undefined &&
       maxDistance !== undefined
     ) {
       result = result.filter((post) => {
@@ -234,16 +230,18 @@ export default function BaristaHome() {
           post.cafe_lat,
           post.cafe_lng
         );
-        return distance >= minDistance && distance <= maxDistance;
+        return distance <= maxDistance;
       });
     }
 
-    const [minWage, maxWage] = detailedFilters.hourlyWage || [];
-    if (minWage && maxWage) {
+    const minWage = detailedFilters.minWage;
+    const maxWage = detailedFilters.maxWage;
+    if (minWage) {
       result = result.filter((post) => {
         if (post.work_period_type === "long-term") return true;
         const wage = post.hourly_wage ?? 0;
-        return wage >= minWage && wage <= maxWage;
+        const hasUpperBound = maxWage != null && maxWage < 20000;
+        return wage >= minWage && (!hasUpperBound || wage <= maxWage);
       });
     }
 
