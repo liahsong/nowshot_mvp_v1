@@ -35,6 +35,9 @@ const getDistanceKm = (lat1, lng1, lat2, lng2) => {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return earthRadius * c;
 };
+const uuidRegex =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const isUuid = (value) => uuidRegex.test(String(value || ""));
 
 export default function BaristaHome() {
   const supabase = getSupabase();
@@ -53,6 +56,7 @@ export default function BaristaHome() {
     startTime: null,
     endTime: null,
   });
+  const [averageRating, setAverageRating] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -81,7 +85,7 @@ export default function BaristaHome() {
 
       const cafeIds = (posts || [])
         .map((post) => post.cafe_id)
-        .filter(Boolean);
+        .filter((id) => isUuid(id));
       if (cafeIds.length > 0) {
         const { data: cafes } = await supabase
           .from("cafes")
@@ -102,6 +106,20 @@ export default function BaristaHome() {
         .eq("barista_email", authUser.email);
 
       setApplications(apps || []);
+
+      const { data: reviewRows } = await supabase
+        .from("reviews")
+        .select("rating")
+        .eq("barista_email", authUser.email);
+      if (reviewRows && reviewRows.length > 0) {
+        const sum = reviewRows.reduce(
+          (acc, row) => acc + Number(row.rating || 0),
+          0
+        );
+        setAverageRating(Number((sum / reviewRows.length).toFixed(1)));
+      } else {
+        setAverageRating(0);
+      }
     };
 
     fetchData();
@@ -353,9 +371,9 @@ export default function BaristaHome() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-900">
-                      {profile?.review_count || 0}
+                      {averageRating.toFixed(1)}
                     </p>
-                    <p className="text-xs text-gray-500">받은 리뷰</p>
+                    <p className="text-xs text-gray-500">평균 평점</p>
                   </div>
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import SplitLayout from "../../components/SplitLayout";
@@ -62,7 +62,25 @@ export default function BaristaMyPage() {
     enabled: !!user?.email,
   });
 
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["baristaReviews", user?.email],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("rating")
+        .eq("barista_email", user.email);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!user?.email,
+  });
+
   const hiredCount = applications.filter((app) => app.status === "hired").length;
+  const averageRating = useMemo(() => {
+    if (!reviews.length) return 0;
+    const sum = reviews.reduce((acc, r) => acc + Number(r.rating || 0), 0);
+    return Number((sum / reviews.length).toFixed(1));
+  }, [reviews]);
 
   useEffect(() => {
     let active = true;
@@ -220,9 +238,9 @@ export default function BaristaMyPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-900">
-                      {profile?.review_count || 0}
+                      {averageRating.toFixed(1)}
                     </p>
-                    <p className="text-xs text-gray-500">받은 리뷰</p>
+                    <p className="text-xs text-gray-500">평균 평점</p>
                   </div>
                 </div>
               </div>
