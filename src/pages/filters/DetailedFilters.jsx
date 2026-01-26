@@ -126,16 +126,15 @@ export default function DetailedFilters({ open, onOpenChange, filters, onApply }
               <Label className="text-sm font-semibold">거리</Label>
             </div>
             <p className="text-sm font-semibold text-gray-900 mb-3">
-          내 위치로부터 {localFilters.minDistanceKm}km 안의 카페공고
+          내 위치로부터 {localFilters.maxDistanceKm}km 안의 카페공고
            </p>
               <Slider
-                dir="rtl"
-                value={[localFilters.minDistanceKm]}
+                value={[localFilters.maxDistanceKm]}
                 onValueChange={(value) =>
                   setLocalFilters({
                     ...localFilters,
-                    minDistanceKm: clampNumber(
-                      Number(value?.[0] ?? 0),
+                    maxDistanceKm: clampNumber(
+                      Number(value?.[0] ?? DEFAULT_DISTANCE),
                       DISTANCE_MIN,
                       DISTANCE_MAX
                     ),
@@ -148,7 +147,7 @@ export default function DetailedFilters({ open, onOpenChange, filters, onApply }
           
             <div className="flex justify-between text-sm font-semibold text-gray-900">
               <span>1km</span>
-              <span>20km</span>
+              <span>15km</span>
             </div>
           </div>
 
