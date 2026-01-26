@@ -20,8 +20,8 @@ export default function DetailedFilters({ open, onOpenChange, filters, onApply }
 
   const handleReset = () => {
     const resetFilters = {
-      distance: [1, 15],
-      hourlyWage: [11000, 25000],
+      distance: 15,
+      hourlyWage: [10320, 25000],
       startTime: null,
       endTime: null,
     };
@@ -51,18 +51,18 @@ export default function DetailedFilters({ open, onOpenChange, filters, onApply }
               <Label className="text-sm font-semibold">거리</Label>
             </div>
             <Slider
-              value={localFilters.distance}
+              dir="rtl"
+              value={[localFilters.distance ?? 15]}
               onValueChange={(value) =>
-                setLocalFilters({ ...localFilters, distance: value })
+                setLocalFilters({ ...localFilters, distance: value[0] })
               }
               min={1}
               max={15}
               step={1}
               className="mb-3"
             />
-            <div className="flex justify-between text-sm font-semibold text-gray-900">
-              <span>{localFilters.distance[0]}km</span>
-              <span>{localFilters.distance[1]}km</span>
+            <div className="flex justify-end text-sm font-semibold text-gray-900">
+              <span>{localFilters.distance ?? 15}km 이내</span>
             </div>
           </div>
 
@@ -76,7 +76,7 @@ export default function DetailedFilters({ open, onOpenChange, filters, onApply }
               onValueChange={(value) =>
                 setLocalFilters({ ...localFilters, hourlyWage: value })
               }
-              min={11000}
+              min={10320}
               max={25000}
               step={1000}
               className="mb-3"

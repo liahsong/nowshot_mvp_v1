@@ -51,8 +51,8 @@ export default function BaristaHome() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [showDetailedFilters, setShowDetailedFilters] = useState(false);
   const [detailedFilters, setDetailedFilters] = useState({
-    distance: [1, 15],
-    hourlyWage: [11000, 25000],
+    distance: 15,
+    hourlyWage: [10320, 25000],
     startTime: null,
     endTime: null,
   });
@@ -212,7 +212,14 @@ export default function BaristaHome() {
       });
     }
 
-    const [minDistance, maxDistance] = detailedFilters.distance || [];
+    const maxDistance =
+      typeof detailedFilters.distance === "number"
+        ? detailedFilters.distance
+        : detailedFilters.distance?.[1];
+    const minDistance =
+      typeof detailedFilters.distance === "number"
+        ? 1
+        : detailedFilters.distance?.[0];
     if (
       profile?.lat &&
       profile?.lng &&
