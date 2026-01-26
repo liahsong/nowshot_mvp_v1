@@ -11,7 +11,7 @@ import { Label } from "../../components/ui/label";
 import { MapPin, DollarSign, Clock } from "lucide-react";
 
 const DISTANCE_MIN = 1;
-const DISTANCE_MAX = 20;
+const DISTANCE_MAX = 15;
 const DEFAULT_DISTANCE = 15;
 const WAGE_OPTIONS = [
   10320, 11000, 12000, 13000, 14000, 15000, 16000, 17000, 18000, 19000, 20000,
