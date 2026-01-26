@@ -139,6 +139,8 @@ export default function JobPostDetail() {
               <img
                 src={cafeImage}
                 alt=""
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
             </div>

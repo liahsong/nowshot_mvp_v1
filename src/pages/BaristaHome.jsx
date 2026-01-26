@@ -310,6 +310,8 @@ export default function BaristaHome() {
                     <img
                       src={profilePhotoUrl || profile.profile_photo}
                       alt=""
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -449,6 +451,8 @@ export default function BaristaHome() {
                               <img
                                 src={getCafeImage(post)}
                                 alt=""
+                                loading="lazy"
+                                decoding="async"
                                 className="w-full h-full object-cover"
                               />
                             </div>

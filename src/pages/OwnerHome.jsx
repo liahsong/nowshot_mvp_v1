@@ -329,6 +329,8 @@ export default function OwnerHome() {
                           <img
                             src={imageUrl}
                             alt=""
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-20 rounded-lg object-cover mb-2"
                           />
                         );
