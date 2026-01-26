@@ -128,8 +128,13 @@ export default function BaristaDetail() {
   }, [applicationId]);
 
   useEffect(() => {
-    if (reviewMode) setReviewDialog(true);
-  }, [reviewMode]);
+    if (reviewMode && !hasReviewForThisJob) {
+      setReviewDialog(true);
+    } else if (reviewMode && hasReviewForThisJob) {
+      setReviewDialog(false);
+      toast({ title: "이미 리뷰를 작성했습니다." });
+    }
+  }, [reviewMode, hasReviewForThisJob]);
 
   const hasReviewForThisJob = useMemo(() => {
     if (!application?.job_post_id) return false;
