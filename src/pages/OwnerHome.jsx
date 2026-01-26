@@ -129,16 +129,37 @@ export default function OwnerHome() {
       if (postIds.length === 0) return [];
       const { data, error } = await supabase
         .from("applications")
-        .select("*")
-        .in("job_post_id", postIds)
-        .eq("status", "pending");
+        .select("id, job_post_id, status")
+        .in("job_post_id", postIds);
       if (error) throw error;
       return data ?? [];
     },
     enabled: jobPosts.length > 0,
   });
 
-  const pendingCount = applications.length;
+  const pendingCount = useMemo(
+    () => applications.filter((app) => app.status === "pending").length,
+    [applications]
+  );
+  const applicationCounts = useMemo(() => {
+    const map = new Map();
+    applications.forEach((app) => {
+      if (!app.job_post_id) return;
+      map.set(app.job_post_id, (map.get(app.job_post_id) || 0) + 1);
+    });
+    return map;
+  }, [applications]);
+  const sortedJobPosts = useMemo(() => {
+    const list = [...jobPosts];
+    return list.sort((a, b) => {
+      const aClosed = a.status === "closed" || a.status === "completed";
+      const bClosed = b.status === "closed" || b.status === "completed";
+      if (aClosed === bClosed) {
+        return new Date(b.created_at) - new Date(a.created_at);
+      }
+      return aClosed ? 1 : -1;
+    });
+  }, [jobPosts]);
   const openPostsCount = useMemo(
     () => jobPosts.filter((post) => post.status === "open").length,
     [jobPosts]
@@ -198,7 +219,8 @@ export default function OwnerHome() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-white rounded-2xl p-4 shadow-sm"
+                className="bg-white rounded-2xl p-4 shadow-sm cursor-pointer"
+                onClick={() => navigate("/owner/applicants")}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
@@ -242,7 +264,7 @@ export default function OwnerHome() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {jobPosts.slice(0, 3).map((post, index) => (
+                  {sortedJobPosts.slice(0, 3).map((post, index) => (
                     <motion.div
                       key={post.id}
                       initial={{ opacity: 0, y: 10 }}
@@ -275,6 +297,9 @@ export default function OwnerHome() {
                               </span>
                               <span>
                                 {post.start_time} - {post.end_time}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                지원 {applicationCounts.get(post.id) || 0}명
                               </span>
                             </div>
                             <ChevronRight className="w-5 h-5 text-gray-400" />

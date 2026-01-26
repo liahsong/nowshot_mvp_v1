@@ -251,6 +251,14 @@ export default function JobPostDetail() {
               </div>
             )}
 
+            <div className="bg-amber-50 rounded-xl p-4 flex gap-3">
+              <FileCheck className="w-5 h-5 text-amber-600 flex-shrink-0" />
+              <div className="text-sm text-amber-700">
+                <p className="font-medium mb-1">보건증 필참</p>
+                <p className="text-amber-600">지원 전 준비해주세요.</p>
+              </div>
+            </div>
+
             <div className="pt-2">
               {isApplied ? (
                 <div className="w-full h-12 rounded-xl bg-gray-200 text-gray-500 flex items-center justify-center gap-2">

@@ -433,7 +433,7 @@ export default function BaristaDetail() {
               </motion.div>
             </div>
             <Dialog open={reviewDialog} onOpenChange={setReviewDialog}>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md bg-white">
                 <DialogHeader>
                   <DialogTitle>리뷰 작성</DialogTitle>
                 </DialogHeader>

@@ -54,7 +54,7 @@ export default function JobCreate() {
     work_end_date: "",
     start_time: "",
     end_time: "",
-    hourly_wage: "",
+    hourly_wage: "10,320",
     monthly_salary: "",
     job_description: "",
     preferred_qualifications: "",
@@ -208,7 +208,9 @@ export default function JobCreate() {
       };
 
       if (formData.work_period_type === "short-term") {
-        postData.hourly_wage = Number(formData.hourly_wage);
+        postData.hourly_wage = Number(
+          String(formData.hourly_wage).replace(/,/g, "")
+        );
       } else {
         postData.work_type = formData.work_type;
         postData.monthly_salary = Number(
@@ -350,6 +352,7 @@ export default function JobCreate() {
             <Label>근무 시작일</Label>
             <Input
               type="date"
+              lang="ko"
               value={formData.work_start_date}
               onChange={(event) =>
                 setFormData({ ...formData, work_start_date: event.target.value })
@@ -361,6 +364,7 @@ export default function JobCreate() {
             <Label>근무 종료일</Label>
             <Input
               type="date"
+              lang="ko"
               value={formData.work_end_date}
               onChange={(event) =>
                 setFormData({ ...formData, work_end_date: event.target.value })
@@ -429,10 +433,16 @@ export default function JobCreate() {
               }
               onChange={(event) => {
                 if (formData.work_period_type === "short-term") {
+                  const value = event.target.value.replace(/,/g, "");
+                  if (!isNaN(value)) {
+                    const formatted = value
+                      ? Number(value).toLocaleString()
+                      : "";
                   setFormData({
                     ...formData,
-                    hourly_wage: event.target.value,
+                    hourly_wage: formatted,
                   });
+                  }
                 } else {
                   const value = event.target.value.replace(/,/g, "");
                   if (!isNaN(value)) {
@@ -445,7 +455,7 @@ export default function JobCreate() {
               }}
               placeholder={
                 formData.work_period_type === "short-term"
-                  ? "10000"
+                  ? "10,320"
                   : "2,096,270"
               }
               className="pr-8"

@@ -5,6 +5,13 @@ import { getSupabase } from "../../lib/supabase";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
+import {
   ArrowLeft,
   Calendar,
   Clock,
@@ -13,6 +20,7 @@ import {
   PencilLine,
   Trash2,
   Users,
+  User,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -47,6 +55,7 @@ export default function JobManage() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("open");
   const [selectedApplicantId, setSelectedApplicantId] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -149,6 +158,12 @@ export default function JobManage() {
     } finally {
       setConfirmingId(null);
     }
+  };
+
+  const openConfirmDialog = (applicationId) => {
+    if (!applicationId) return;
+    setSelectedApplicantId(applicationId);
+    setConfirmDialog(true);
   };
 
   const handleReview = (applicationId) => {
@@ -528,7 +543,7 @@ export default function JobManage() {
                               hasHired ||
                               selectedApplicantId !== app.id
                             }
-                            onClick={() => handleConfirmHire(app.id)}
+                            onClick={() => openConfirmDialog(app.id)}
                           >
                             {confirmingId === app.id ? "처리 중..." : "채용 확정"}
                           </Button>
@@ -540,6 +555,45 @@ export default function JobManage() {
               )}
             </div>
           </div>
+
+          <Dialog open={confirmDialog} onOpenChange={setConfirmDialog}>
+            <DialogContent className="max-w-sm bg-white">
+              <DialogHeader>
+                <DialogTitle>채용 확정</DialogTitle>
+                <DialogDescription className="text-sm text-gray-500">
+                  채용 확정 시 바리스타에게 개별적으로 연락해주세요.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-[#1FBECC]/10 flex items-center justify-center">
+                  <User className="w-5 h-5 text-[#1FBECC]" />
+                </div>
+                <div className="text-sm text-gray-600">
+                  선택한 지원자를 채용 확정할까요?
+                </div>
+              </div>
+              <div className="flex gap-3 mt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setConfirmDialog(false)}
+                  className="flex-1"
+                >
+                  취소
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (!selectedApplicantId) return;
+                    handleConfirmHire(selectedApplicantId);
+                    setConfirmDialog(false);
+                  }}
+                  className="flex-1 bg-[#1FBECC] hover:bg-[#1AABB8]"
+                  disabled={confirmingId === selectedApplicantId}
+                >
+                  {confirmingId === selectedApplicantId ? "처리 중..." : "확정"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       }
     />
