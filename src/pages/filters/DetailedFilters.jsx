@@ -126,7 +126,7 @@ export default function DetailedFilters({ open, onOpenChange, filters, onApply }
               <Label className="text-sm font-semibold">거리</Label>
             </div>
             <p className="text-sm font-semibold text-gray-900 mb-3">
-              내 위치 {localFilters.maxDistanceKm}km 까지의 일감
+              내 위치 {localFilters.minDistanceKm}km 까지의 공고
             </p>
             <Slider
               dir="rtl"
