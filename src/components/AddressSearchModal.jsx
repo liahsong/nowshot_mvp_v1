@@ -31,16 +31,24 @@ export default function AddressSearchModal({ open, onClose, onSelect }) {
       containerRef.current.innerHTML = "";
       const postcode = new window.kakao.Postcode({
         oncomplete: function (data) {
-          const geocoder = new window.kakao.maps.services.Geocoder();
+          const address = data.roadAddress || data.address;
+          if (!window.kakao?.maps?.services?.Geocoder) {
+            onSelect({ lat: null, lng: null, address });
+            onClose();
+            return;
+          }
 
-          geocoder.addressSearch(data.address, function (result, status) {
+          const geocoder = new window.kakao.maps.services.Geocoder();
+          geocoder.addressSearch(address, function (result, status) {
             if (status === window.kakao.maps.services.Status.OK) {
               const lat = Number(result[0].y);
               const lng = Number(result[0].x);
-
-              onSelect({ lat, lng, address: data.address });
+              onSelect({ lat, lng, address });
               onClose();
+              return;
             }
+            onSelect({ lat: null, lng: null, address });
+            onClose();
           });
         },
         width: "100%",
@@ -68,12 +76,12 @@ export default function AddressSearchModal({ open, onClose, onSelect }) {
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
-      <DialogContent className="max-w-lg w-[90vw] h-[80vh] p-0 !flex !flex-col overflow-hidden">
+      <DialogContent className="max-w-lg w-[92vw] h-[85vh] p-0 !flex !flex-col overflow-hidden">
         <DialogHeader className="p-4 border-b">
           <DialogTitle>주소 검색</DialogTitle>
         </DialogHeader>
 
-        <div ref={containerRef} className="w-full flex-1 min-h-[420px]" />
+        <div ref={containerRef} className="w-full flex-1 min-h-0" />
 
         <div className="p-4 border-t">
           <Button variant="outline" className="w-full" onClick={onClose}>
