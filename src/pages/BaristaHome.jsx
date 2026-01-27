@@ -40,6 +40,8 @@ const uuidRegex =
 const isUuid = (value) => uuidRegex.test(String(value || ""));
 
 export default function BaristaHome() {
+  //state들 
+  const [rpcPosts, setRpcPosts] = useState([]);
   const supabase = getSupabase();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -57,8 +59,12 @@ export default function BaristaHome() {
     startTime: null,
     endTime: null,
   });
+  const [userLocation, setUserLocation] = useState(null);
+// { lat: number, lng: number }
+
   const [averageRating, setAverageRating] = useState(0);
 
+  //useEffect(fetch data)
   useEffect(() => {
     const fetchData = async () => {
       const {
@@ -125,55 +131,87 @@ export default function BaristaHome() {
 
     fetchData();
   }, []);
+    //추가 거리
+    useEffect(() => {
+      if (!userLocation) return;
+  
+      // 거리 필터 RPC 호출
+      const fetchByDistance = async () => {
+        const { data, error } = await supabase.rpc(
+          "job_posts_within_distance_simple",
+          {
+            user_lat: userLocation.lat,
+            user_lng: userLocation.lng,
+            max_distance_km: detailedFilters.maxDistanceKm,
+            min_wage: detailedFilters.minWage,
+            max_wage: detailedFilters.maxWage,
+          }
+        );
+  
+        if (error) {
+          console.error("❌ 거리 RPC 에러:", error);
+          setRpcPosts([]);
+        } else {
+          setRpcPosts(data || []);
+        }
+      };
+  
+      fetchByDistance();
+    }, [userLocation, detailedFilters]);
 
   useEffect(() => {
     let active = true;
     const resolvePhoto = async () => {
-      if (!profile?.profile_photo) {
+      try {
+        if (!profile?.profile_photo) {
+          if (active) setProfilePhotoUrl("");
+          return;
+        }
+        const match = profile.profile_photo.match(
+          /\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+?)(?:\?|$)/
+        );
+        let bucket = "barista_profile";
+        let path = profile.profile_photo;
+        if (match) {
+          bucket = match[1];
+          path = match[2];
+        } else if (profile.profile_photo.startsWith("http")) {
+          if (active) setProfilePhotoUrl(profile.profile_photo);
+          return;
+        }
+
+        if (!path.includes("/") && user?.id) {
+          path = `${user.id}/profile/${path}`;
+        }
+
+        if (path.startsWith(`${bucket}/`)) {
+          path = path.slice(bucket.length + 1);
+        }
+
+        const candidates = [
+          path.replace(/^\/+/, ""),
+          `profile/${path.replace(/^\/+/, "").replace(/^profile\//, "")}`,
+        ];
+
+        let signedUrl = "";
+        for (const candidate of candidates) {
+          signedUrl = await getSignedUrl({
+            bucket,
+            path: candidate,
+            expiresIn: 3600,
+          });
+          if (signedUrl) break;
+        }
+
+        const { data, error } = signedUrl
+          ? { data: { signedUrl }, error: null }
+          : { data: null, error: { message: "sign failed" } };
+        if (active) {
+          setProfilePhotoUrl(!error && data?.signedUrl ? data.signedUrl : "");
+        }
+      } catch (error) {
+        console.warn("profile photo resolve failed:", error); // ✅ 수정됨
         if (active) setProfilePhotoUrl("");
-        return;
-      }
-      const match = profile.profile_photo.match(
-        /\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+?)(?:\?|$)/
-      );
-      let bucket = "barista_profile";
-      let path = profile.profile_photo;
-      if (match) {
-        bucket = match[1];
-        path = match[2];
-      } else if (profile.profile_photo.startsWith("http")) {
-        if (active) setProfilePhotoUrl(profile.profile_photo);
-        return;
-      }
-
-      if (!path.includes("/") && user?.id) {
-        path = `${user.id}/profile/${path}`;
-      }
-
-      if (path.startsWith(`${bucket}/`)) {
-        path = path.slice(bucket.length + 1);
-      }
-
-      const candidates = [
-        path.replace(/^\/+/, ""),
-        `profile/${path.replace(/^\/+/, "").replace(/^profile\//, "")}`,
-      ];
-
-      let signedUrl = "";
-      for (const candidate of candidates) {
-        signedUrl = await getSignedUrl({
-          bucket,
-          path: candidate,
-          expiresIn: 3600,
-        });
-        if (signedUrl) break;
-      }
-
-      const { data, error } = signedUrl
-        ? { data: { signedUrl }, error: null }
-        : { data: null, error: { message: "sign failed" } };
-      if (active) {
-        setProfilePhotoUrl(!error && data?.signedUrl ? data.signedUrl : "");
       }
     };
     resolvePhoto();
@@ -189,9 +227,31 @@ export default function BaristaHome() {
         .filter(Boolean),
     [applications]
   );
+//추가됨//
+  const testDistance = async () => {
+    if (!userLocation) return;
+    const { data, error } = await supabase.rpc(
+      "job_posts_within_distance_simple",
+      {
+        user_lat: userLocation.lat,
+        user_lng: userLocation.lng,
+        max_distance_km: detailedFilters.maxDistanceKm,//여기 수정,
+      }
+    );
+  
+    
+    if (error) {
+      console.error("❌ 거리 RPC 에러:", error);
+    } else {
+      console.log("✅ 거리 RPC 결과:", data);
+      setRpcPosts(data); // ⭐️ 이 줄이 핵심
+    }
+  
+  };
+  
 
   const filteredPosts = useMemo(() => {
-    let result = jobPosts;
+    let result = rpcPosts; // ✅ 수정됨
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter((post) => {
@@ -260,30 +320,35 @@ export default function BaristaHome() {
     }
 
     return result;
-  }, [jobPosts, searchQuery, selectedDate, detailedFilters, profile]);
+  }, [rpcPosts, searchQuery, selectedDate, detailedFilters, profile]); // ✅ 수정됨
 
   const getCafeImage = (post) => {
-    const cafe = cafesById[post.cafe_id];
-    const photos = cafe?.photos;
-    if (photos) {
-      if (Array.isArray(photos)) {
-        const first = photos[0];
-        if (typeof first === "string") return first;
-        return first?.url || first?.publicUrl || null;
+    try {
+      const cafe = cafesById[post.cafe_id];
+      const photos = cafe?.photos;
+      if (photos) {
+        if (Array.isArray(photos)) {
+          const first = photos[0];
+          if (typeof first === "string") return first;
+          return first?.url || first?.publicUrl || null;
+        }
+        if (typeof photos === "string") return photos;
+        if (typeof photos === "object") {
+          if (Array.isArray(photos.urls)) return photos.urls[0] || null;
+          return photos.url || photos.publicUrl || null;
+        }
       }
-      if (typeof photos === "string") return photos;
-      if (typeof photos === "object") {
-        if (Array.isArray(photos.urls)) return photos.urls[0] || null;
-        return photos.url || photos.publicUrl || null;
-      }
-    }
 
-    const fallbackPhotos = post.cafe_photos;
-    if (Array.isArray(fallbackPhotos)) {
-      return fallbackPhotos[0] || null;
+      const fallbackPhotos = post.cafe_photos;
+      if (Array.isArray(fallbackPhotos)) {
+        return fallbackPhotos[0] || null;
+      }
+      if (typeof fallbackPhotos === "string") return fallbackPhotos;
+      return null;
+    } catch (error) {
+      console.warn("cafe image resolve failed:", error); // ✅ 수정됨
+      return null; // ✅ 수정됨
     }
-    if (typeof fallbackPhotos === "string") return fallbackPhotos;
-    return null;
   };
 
   return (
@@ -385,6 +450,20 @@ export default function BaristaHome() {
                 </div>
               </div>
             </div>
+            <div className="mt-6 space-y-2">
+  {rpcPosts.map((post) => (
+    <div
+      key={post.id}
+      className="p-3 border rounded-lg text-sm"
+    >
+      <div className="font-semibold">{post.cafe_name}</div>
+      <div className="text-gray-500">
+        거리: {post.distance_km} km
+      </div>
+    </div>
+  ))}
+</div>
+
 
             {/* Filters */}
             <div className="space-y-4">
@@ -430,10 +509,10 @@ export default function BaristaHome() {
 
             <div>
               <h2 className="font-semibold text-gray-900 mb-3">
-                공고 {filteredPosts.length}건
+                공고 {rpcPosts.length}건
               </h2>
 
-              {filteredPosts.length === 0 ? (
+              {rpcPosts.length === 0 ? ( // ✅ 수정됨
                 <div className="bg-white rounded-2xl p-8 text-center">
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                     <Briefcase className="w-8 h-8 text-gray-400" />
@@ -442,7 +521,7 @@ export default function BaristaHome() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {filteredPosts.map((post, index) => (
+                  {rpcPosts.map((post, index) => (
                     <motion.div
                       key={post.id}
                       initial={{ opacity: 0, y: 10 }}
