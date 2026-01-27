@@ -131,6 +131,10 @@ export default function BaristaHome() {
 
     fetchData();
   }, []);
+
+  useEffect(() => {
+    console.log("📍 userLocation", userLocation); // ✅ 수정됨
+  }, [userLocation]);
     //추가 거리
     useEffect(() => {
       if (!userLocation) return;
@@ -156,8 +160,12 @@ export default function BaristaHome() {
         }
       };
   
-      fetchByDistance();
-    }, [userLocation, detailedFilters]);
+    fetchByDistance();
+  }, [userLocation, detailedFilters]);
+
+  useEffect(() => {
+    console.log("✅ rpcPosts", rpcPosts); // ✅ 수정됨
+  }, [rpcPosts]);
 
   useEffect(() => {
     let active = true;
@@ -227,19 +235,6 @@ export default function BaristaHome() {
         .filter(Boolean),
     [applications]
   );
-//추가됨//
-  const testDistance = async () => {
-    if (!userLocation) return;
-    const { data, error } = await supabase.rpc(
-      "job_posts_within_distance_simple",
-      {
-        user_lat: userLocation.lat,
-        user_lng: userLocation.lng,
-        max_distance_km: detailedFilters.maxDistanceKm,//여기 수정,
-      }
-    );
-  
-    
     if (error) {
       console.error("❌ 거리 RPC 에러:", error);
     } else {
@@ -251,7 +246,7 @@ export default function BaristaHome() {
   
 
   const filteredPosts = useMemo(() => {
-    let result = rpcPosts; // ✅ 수정됨
+    let result = rpcPosts; //⭐️ 반드시 rpcPosts 기준
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter((post) => {
@@ -277,22 +272,6 @@ export default function BaristaHome() {
       typeof detailedFilters.maxDistanceKm === "number"
         ? detailedFilters.maxDistanceKm
         : 15;
-    if (
-      profile?.lat &&
-      profile?.lng &&
-      maxDistance !== undefined
-    ) {
-      result = result.filter((post) => {
-        if (post.cafe_lat == null || post.cafe_lng == null) return true;
-        const distance = getDistanceKm(
-          profile.lat,
-          profile.lng,
-          post.cafe_lat,
-          post.cafe_lng
-        );
-        return distance <= maxDistance;
-      });
-    }
 
     const minWage = detailedFilters.minWage;
     const maxWage = detailedFilters.maxWage;
