@@ -38,6 +38,7 @@ const BUCKETS = {
   latteArt: "barista_latteart",
   career: "barista_carrer",
 };
+const PUBLIC_BUCKETS = new Set([BUCKETS.profile]);
 
 export default function BaristaOnboarding() {
   const supabase = getSupabase();
@@ -188,7 +189,13 @@ export default function BaristaOnboarding() {
     }
 
     const safeName = uploadFileRef.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const path = `${userId}/${folder}/${Date.now()}_${safeName}`;
+    const uniqueId =
+      (typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}_${Math.random().toString(16).slice(2)}`);
+    const path = PUBLIC_BUCKETS.has(bucket)
+      ? `${folder}/${uniqueId}_${safeName}`
+      : `${userId}/${folder}/${Date.now()}_${safeName}`;
     const { error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(path, uploadFileRef, {
@@ -197,6 +204,12 @@ export default function BaristaOnboarding() {
       });
 
     if (uploadError) throw uploadError;
+
+    if (PUBLIC_BUCKETS.has(bucket)) {
+      const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+      const publicUrl = data?.publicUrl;
+      return publicUrl ? `${publicUrl}?t=${Date.now()}` : path;
+    }
 
     return path;
   };
