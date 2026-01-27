@@ -179,6 +179,9 @@ export default function OwnerProfileEdit() {
             <div>
               <Label>주소</Label>
               <Input
+                id="owner-address"
+                name="address"
+                autoComplete="street-address"
                 value={formData.address}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, address: e.target.value }))

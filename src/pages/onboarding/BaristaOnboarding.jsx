@@ -478,6 +478,9 @@ export default function BaristaOnboarding() {
               <div>
                 <Label>주소</Label>
                 <Input
+                  id="barista-onboarding-address"
+                  name="address"
+                  autoComplete="street-address"
                   value={profileData.address}
                   onChange={(e) =>
                     setProfileData({

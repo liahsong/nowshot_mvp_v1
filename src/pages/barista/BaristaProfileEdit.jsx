@@ -618,6 +618,9 @@ export default function BaristaProfileEdit() {
             <div>
               <Label>주소</Label>
               <Input
+                id="barista-address"
+                name="address"
+                autoComplete="street-address"
                 value={formData.address}
                 onChange={(event) =>
                   setFormData({ ...formData, address: event.target.value })

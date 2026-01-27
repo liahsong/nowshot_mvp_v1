@@ -403,6 +403,9 @@ export default function CafeManage() {
                 <div>
                   <Label>주소</Label>
                   <Input
+                    id="cafe-address"
+                    name="cafe_address"
+                    autoComplete="street-address"
                     value={formData.address}
                     onChange={(e) =>
                       setFormData({ ...formData, address: e.target.value })

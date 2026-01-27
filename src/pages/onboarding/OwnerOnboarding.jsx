@@ -367,6 +367,9 @@ export default function OwnerOnboarding() {
               <div>
                 <Label>카페 주소</Label>
                 <Input
+                  id="owner-onboarding-cafe-address"
+                  name="cafe_address"
+                  autoComplete="street-address"
                   value={cafeData.address}
                   onChange={(event) =>
                     setCafeData({ ...cafeData, address: event.target.value })
