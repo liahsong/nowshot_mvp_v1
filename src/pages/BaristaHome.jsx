@@ -20,6 +20,7 @@ import ko from "date-fns/locale/ko";
 import { motion } from "framer-motion";
 import DateFilter from "./filters/DateFilter";
 import DetailedFilters from "./filters/DetailedFilters";
+import AddressSearchModal from "../components/AddressSearchModal";
 
 const toRad = (value) => (value * Math.PI) / 180;
 const getDistanceKm = (lat1, lng1, lat2, lng2) => {
@@ -52,6 +53,8 @@ export default function BaristaHome() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState(null);
   const [showDetailedFilters, setShowDetailedFilters] = useState(false);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [showAddressModal, setShowAddressModal] = useState(false);
   const [detailedFilters, setDetailedFilters] = useState({
     maxDistanceKm: 15,
     minWage: 10320,
@@ -465,6 +468,13 @@ export default function BaristaHome() {
 
             {/* Filters */}
             <div className="space-y-4">
+              <Button
+                variant="outline"
+                className="w-full h-12 rounded-xl"
+                onClick={() => setShowAddressModal(true)}
+              >
+                주소로 거리 설정
+              </Button>
               {/* Date Filter */}
               <div>
                 <div className="flex items-center justify-between mb-3">
@@ -503,6 +513,16 @@ export default function BaristaHome() {
               onOpenChange={setShowDetailedFilters}
               filters={detailedFilters}
               onApply={setDetailedFilters}
+            />
+            <AddressSearchModal
+              open={showAddressModal}
+              onClose={() => setShowAddressModal(false)}
+              onSelect={(location) => {
+                setUserLocation({
+                  lat: location.lat,
+                  lng: location.lng,
+                });
+              }}
             />
 
             <div>
