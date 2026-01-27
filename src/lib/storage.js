@@ -15,8 +15,18 @@ export const getSignedUrl = async ({
   }
 
   const cleaned = raw.replace(/^\/+/, "");
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  if (!accessToken) {
+    const { data: publicData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(cleaned);
+    return publicData?.publicUrl || "";
+  }
+
   const { data, error } = await supabase.functions.invoke("sign-storage", {
     body: { bucket, path: cleaned, expiresIn },
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
 
   if (error) {
