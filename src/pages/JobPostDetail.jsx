@@ -45,7 +45,7 @@ export default function JobPostDetail() {
           .from("cafes")
           .select("*")
           .eq("id", postRow.cafe_id)
-          .single();
+          .maybeSingle();
         if (!cafeError) {
           setCafe(cafeRow);
         }

@@ -22,8 +22,13 @@ export const getSignedUrl = async ({
       .getPublicUrl(cleaned);
     return publicData?.publicUrl || "";
   }
+  let accessToken = null;
   const { data: sessionData } = await supabase.auth.getSession();
-  const accessToken = sessionData?.session?.access_token;
+  accessToken = sessionData?.session?.access_token || null;
+  if (!accessToken) {
+    const { data: refreshed } = await supabase.auth.refreshSession();
+    accessToken = refreshed?.session?.access_token || null;
+  }
   if (!accessToken) {
     const { data: publicData } = supabase.storage
       .from(bucket)
@@ -33,11 +38,13 @@ export const getSignedUrl = async ({
 
   const { data, error } = await supabase.functions.invoke("sign-storage", {
     body: { bucket, path: cleaned, expiresIn },
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: { authorization: `Bearer ${accessToken}` },
   });
 
   if (error) {
-    console.warn("sign-storage failed:", error.message || error);
+    if (error?.status !== 401) {
+      console.warn("sign-storage failed:", error.message || error);
+    }
     const { data: publicData } = supabase.storage
       .from(bucket)
       .getPublicUrl(cleaned);
