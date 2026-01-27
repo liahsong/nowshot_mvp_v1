@@ -54,7 +54,6 @@ export default function BaristaHome() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [showDetailedFilters, setShowDetailedFilters] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
-  const [showAddressModal, setShowAddressModal] = useState(false);
   const [detailedFilters, setDetailedFilters] = useState({
     maxDistanceKm: 15,
     minWage: 10320,
