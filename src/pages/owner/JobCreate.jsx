@@ -97,6 +97,10 @@ export default function JobCreate() {
   }, [user]);
 
   const selectedCafe = cafes.find((cafe) => cafe.id === selectedCafeId);
+  const parseMoney = (value) => {
+    const numeric = String(value || "").replace(/[^0-9]/g, "");
+    return numeric ? Number(numeric) : NaN;
+  };
 
   const toggleSkill = (skill) => {
     const skills = formData.required_skills;
@@ -177,6 +181,24 @@ export default function JobCreate() {
 
     setLoading(true);
     try {
+      const hourlyWageValue = parseMoney(formData.hourly_wage);
+      const monthlySalaryValue = parseMoney(formData.monthly_salary);
+      if (isShortTerm && !Number.isFinite(hourlyWageValue)) {
+        toast({
+          title: "입력 필요",
+          description: "시급을 숫자로 입력해주세요.",
+        });
+        setLoading(false);
+        return;
+      }
+      if (!isShortTerm && !Number.isFinite(monthlySalaryValue)) {
+        toast({
+          title: "입력 필요",
+          description: "월급을 숫자로 입력해주세요.",
+        });
+        setLoading(false);
+        return;
+      }
       let geo = null;
       if (selectedCafe.address && kakaoReady) {
         try {
@@ -208,14 +230,10 @@ export default function JobCreate() {
       };
 
       if (formData.work_period_type === "short-term") {
-        postData.hourly_wage = Number(
-          String(formData.hourly_wage).replace(/,/g, "")
-        );
+        postData.hourly_wage = hourlyWageValue;
       } else {
         postData.work_type = formData.work_type;
-        postData.monthly_salary = Number(
-          formData.monthly_salary.replace(/,/g, "")
-        );
+        postData.monthly_salary = monthlySalaryValue;
         postData.preferred_qualifications = formData.preferred_qualifications;
       }
 
@@ -433,7 +451,7 @@ export default function JobCreate() {
               }
               onChange={(event) => {
                 if (formData.work_period_type === "short-term") {
-                  const value = event.target.value.replace(/,/g, "");
+                  const value = event.target.value.replace(/[^0-9]/g, "");
                   if (!isNaN(value)) {
                     const formatted = value
                       ? Number(value).toLocaleString()
@@ -444,7 +462,7 @@ export default function JobCreate() {
                   });
                   }
                 } else {
-                  const value = event.target.value.replace(/,/g, "");
+                  const value = event.target.value.replace(/[^0-9]/g, "");
                   if (!isNaN(value)) {
                     const formatted = value
                       ? Number(value).toLocaleString()
