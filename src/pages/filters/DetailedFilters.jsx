@@ -114,7 +114,7 @@ export default function DetailedFilters({ open, onOpenChange, filters, onApply }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="rounded-2xl max-w-md max-h-[85vh] overflow-y-auto">
+      <DialogContent className="rounded-2xl max-w-md max-h-[85vh] overflow-y-auto bg-white">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold">상세 필터</DialogTitle>
         </DialogHeader>
