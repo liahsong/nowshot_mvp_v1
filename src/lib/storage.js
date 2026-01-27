@@ -8,6 +8,7 @@ export const getSignedUrl = async ({
   if (!bucket || !path) return "";
 
   const supabase = getSupabase(); // ✅ lazy-init 사용
+  const publicBuckets = new Set(["cafe_photos"]);
 
   const raw = String(path);
   if (raw.startsWith("http://") || raw.startsWith("https://")) {
@@ -15,6 +16,12 @@ export const getSignedUrl = async ({
   }
 
   const cleaned = raw.replace(/^\/+/, "");
+  if (publicBuckets.has(bucket)) {
+    const { data: publicData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(cleaned);
+    return publicData?.publicUrl || "";
+  }
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
   if (!accessToken) {
