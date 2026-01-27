@@ -63,6 +63,13 @@ export default function BaristaHome() {
 // { lat: number, lng: number }
 
   const [averageRating, setAverageRating] = useState(0);
+  const jobPostsById = useMemo(() => {
+    const map = {};
+    jobPosts.forEach((post) => {
+      map[post.id] = post;
+    });
+    return map;
+  }, [jobPosts]);
 
   //useEffect(fetch data)
   useEffect(() => {
@@ -131,6 +138,13 @@ export default function BaristaHome() {
 
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (userLocation || jobPosts.length === 0) return;
+    if (rpcPosts.length === 0) {
+      setRpcPosts(jobPosts);
+    }
+  }, [userLocation, jobPosts, rpcPosts]);
 
   useEffect(() => {
     console.log("📍 userLocation", userLocation); // ✅ 수정됨
@@ -236,8 +250,19 @@ export default function BaristaHome() {
     [applications]
   );
 
+  const mergedPosts = useMemo(() => {
+    return rpcPosts.map((post) => {
+      const fullPost = jobPostsById[post.id];
+      if (!fullPost) return post;
+      return {
+        ...fullPost,
+        distance_km: post.distance_km ?? fullPost.distance_km,
+      };
+    });
+  }, [rpcPosts, jobPostsById]);
+
   const filteredPosts = useMemo(() => {
-    let result = rpcPosts; //⭐️ 반드시 rpcPosts 기준
+    let result = mergedPosts; //⭐️ 반드시 rpcPosts 기준
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter((post) => {
@@ -290,7 +315,7 @@ export default function BaristaHome() {
     }
 
     return result;
-  }, [rpcPosts, searchQuery, selectedDate, detailedFilters, profile]); // ✅ 수정됨
+  }, [mergedPosts, searchQuery, selectedDate, detailedFilters, profile]); // ✅ 수정됨
 
   const getCafeImage = (post) => {
     try {
@@ -421,18 +446,21 @@ export default function BaristaHome() {
               </div>
             </div>
             <div className="mt-6 space-y-2">
-  {rpcPosts.map((post) => (
-    <div
-      key={post.id}
-      className="p-3 border rounded-lg text-sm"
-    >
-      <div className="font-semibold">{post.cafe_name}</div>
-      <div className="text-gray-500">
-        거리: {post.distance_km} km
-      </div>
-    </div>
-  ))}
-</div>
+              {rpcPosts.map((post) => {
+                const displayPost = jobPostsById[post.id] || post;
+                return (
+                  <div
+                    key={post.id}
+                    className="p-3 border rounded-lg text-sm"
+                  >
+                    <div className="font-semibold">{displayPost.cafe_name}</div>
+                    <div className="text-gray-500">
+                      거리: {post.distance_km} km
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
 
             {/* Filters */}
@@ -491,7 +519,9 @@ export default function BaristaHome() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {rpcPosts.map((post, index) => (
+                  {rpcPosts.map((post, index) => {
+                    const displayPost = jobPostsById[post.id] || post;
+                    return (
                     <motion.div
                       key={post.id}
                       initial={{ opacity: 0, y: 10 }}
@@ -500,10 +530,10 @@ export default function BaristaHome() {
                     >
                       <Link to={`/barista/baristadetail/${post.id}`}>
                         <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                          {getCafeImage(post) ? (
+                          {getCafeImage(displayPost) ? (
                             <div className="h-32 overflow-hidden">
                               <img
-                                src={getCafeImage(post)}
+                                src={getCafeImage(displayPost)}
                                 alt=""
                                 loading="lazy"
                                 decoding="async"
@@ -521,7 +551,7 @@ export default function BaristaHome() {
                               <div>
                                 <div className="flex items-center gap-2">
                                   <h3 className="font-semibold text-gray-900">
-                                    {post.cafe_name}
+                                    {displayPost.cafe_name}
                                   </h3>
                                   {appliedPostIds.includes(post.id) && (
                                     <Badge className="bg-blue-100 text-blue-700 text-xs">
@@ -532,18 +562,18 @@ export default function BaristaHome() {
                                 <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
                                   <MapPin className="w-3.5 h-3.5" />
                                   <span className="truncate max-w-[200px]">
-                                    {post.cafe_address}
+                                    {displayPost.cafe_address}
                                   </span>
                                 </div>
                               </div>
                               <div className="text-right">
                                 <p className="font-bold text-[#1FBECC]">
-                                  {post.work_period_type === "long-term"
-                                    ? `${post.monthly_salary?.toLocaleString()}원`
-                                    : `${post.hourly_wage?.toLocaleString()}원`}
+                                  {displayPost.work_period_type === "long-term"
+                                    ? `${displayPost.monthly_salary?.toLocaleString()}원`
+                                    : `${displayPost.hourly_wage?.toLocaleString()}원`}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  {post.work_period_type === "long-term"
+                                  {displayPost.work_period_type === "long-term"
                                     ? "월급"
                                     : "시급"}
                                 </p>
@@ -553,26 +583,26 @@ export default function BaristaHome() {
                             <div className="flex items-center gap-3 text-sm text-gray-600 mb-3">
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3.5 h-3.5" />
-                                {post.work_start_date && post.work_end_date
+                                {displayPost.work_start_date && displayPost.work_end_date
                                   ? `${format(
-                                      new Date(post.work_start_date),
+                                      new Date(displayPost.work_start_date),
                                       "M/d (E)",
                                       { locale: ko }
                                     )} ~ ${format(
-                                      new Date(post.work_end_date),
+                                      new Date(displayPost.work_end_date),
                                       "M/d (E)",
                                       { locale: ko }
                                     )}`
                                   : "일정 미정"}
                               </span>
                               <span>
-                                {post.start_time} - {post.end_time}
+                                {displayPost.start_time} - {displayPost.end_time}
                               </span>
                             </div>
 
-                            {post.required_skills?.length > 0 && (
+                            {displayPost.required_skills?.length > 0 && (
                               <div className="flex gap-1.5 flex-wrap">
-                                {post.required_skills.map((skill) => (
+                                {displayPost.required_skills.map((skill) => (
                                   <Badge
                                     key={skill}
                                     variant="secondary"
@@ -587,7 +617,8 @@ export default function BaristaHome() {
                         </div>
                       </Link>
                     </motion.div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
