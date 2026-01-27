@@ -8,13 +8,19 @@ export const loadKakaoSdk = () =>
     }
 
     if (window.kakao && window.kakao.maps) {
-      resolve();
+      window.kakao.maps.load(() => resolve());
       return;
     }
 
     const existing = document.getElementById(sdkId);
     if (existing) {
-      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("load", () => {
+        if (window.kakao?.maps?.load) {
+          window.kakao.maps.load(() => resolve());
+          return;
+        }
+        resolve();
+      });
       existing.addEventListener("error", () =>
         reject(new Error("Kakao SDK load failed."))
       );
@@ -30,8 +36,14 @@ export const loadKakaoSdk = () =>
     const script = document.createElement("script");
     script.id = sdkId;
     script.async = true;
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&libraries=services`;
-    script.onload = () => resolve();
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&libraries=services&autoload=false`;
+    script.onload = () => {
+      if (window.kakao?.maps?.load) {
+        window.kakao.maps.load(() => resolve());
+        return;
+      }
+      resolve();
+    };
     script.onerror = () => reject(new Error("Kakao SDK load failed."));
     document.head.appendChild(script);
   });
