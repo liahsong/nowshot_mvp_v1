@@ -6,6 +6,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import { ArrowLeft, Loader2, FileCheck } from "lucide-react";
+import SplitLayout from "../components/SplitLayout";
 
 export default function ApplicationForm() {
   const supabase = getSupabase();
@@ -106,73 +107,99 @@ export default function ApplicationForm() {
 
   if (!post || !profile) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        로딩 중…
-      </div>
+      <SplitLayout
+        leftContent={
+          <div className="p-12">
+            <img
+              src="/images/main_illust.png"
+              alt="Barista Visual"
+              className="w-full max-w-md mx-auto"
+            />
+          </div>
+        }
+        rightContent={
+          <div className="min-h-screen bg-white flex items-center justify-center">
+            로딩 중…
+          </div>
+        }
+      />
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-4 z-10">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-2">
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
-          </button>
-          <div>
-            <h1 className="font-semibold text-gray-900">지원 작성</h1>
-            <p className="text-xs text-gray-500">{post.cafe_name}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="p-4 space-y-6">
-        {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
-            {error}
-          </div>
-        )}
-
-        <div className="space-y-3">
-          <div>
-            <div className="text-sm text-gray-500 mb-1">이름</div>
-            <Input value={profile.name} disabled />
-          </div>
-          <div>
-            <div className="text-sm text-gray-500 mb-1">연락처</div>
-            <Input value={profile.phone} disabled />
-          </div>
-          <div>
-            <div className="text-sm text-gray-500 mb-1">주소</div>
-            <Input value={profile.address || ""} disabled />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <div className="text-sm text-gray-500">지원 메시지</div>
-          <Textarea
-            value={coverLetter}
-            onChange={(event) => setCoverLetter(event.target.value)}
-            placeholder="간단한 자기소개 또는 지원 메시지를 남겨주세요"
-            className="min-h-[120px]"
+    <SplitLayout
+      leftContent={
+        <div className="p-12">
+          <img
+            src="/images/main_illust.png"
+            alt="Barista Visual"
+            className="w-full max-w-md mx-auto"
           />
         </div>
+      }
+      rightContent={
+        <div className="min-h-screen bg-white">
+          <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-4 z-10">
+            <div className="flex items-center gap-4">
+              <button onClick={() => navigate(-1)} className="p-2 -ml-2">
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <div>
+                <h1 className="font-semibold text-gray-900">지원 작성</h1>
+                <p className="text-xs text-gray-500">{post.cafe_name}</p>
+              </div>
+            </div>
+          </div>
 
-        <Button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="w-full h-12 bg-[#1FBECC] hover:bg-[#1AABB8] text-white rounded-xl"
-        >
-          {loading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <span className="flex items-center gap-2">
-              <FileCheck className="w-5 h-5" />
-              지원 완료
-            </span>
-          )}
-        </Button>
-      </div>
-    </div>
+          <div className="p-4 space-y-6">
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <div>
+                <div className="text-sm text-gray-500 mb-1">이름</div>
+                <Input value={profile.name} disabled />
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-1">연락처</div>
+                <Input value={profile.phone} disabled />
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-1">주소</div>
+                <Input value={profile.address || ""} disabled />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-sm text-gray-500">지원 메시지</div>
+              <Textarea
+                value={coverLetter}
+                onChange={(event) => setCoverLetter(event.target.value)}
+                placeholder="간단한 자기소개 또는 지원 메시지를 남겨주세요"
+                className="min-h-[120px]"
+              />
+            </div>
+
+            <Button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full h-12 bg-[#1FBECC] hover:bg-[#1AABB8] text-white rounded-xl"
+            >
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <span className="flex items-center gap-2">
+                  <FileCheck className="w-5 h-5" />
+                  지원 완료
+                </span>
+              )}
+            </Button>
+          </div>
+        </div>
+      }
+    />
   );
 }
