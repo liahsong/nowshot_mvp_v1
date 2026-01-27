@@ -23,35 +23,57 @@ export default function AddressSearchModal({ open, onClose, onSelect }) {
       return;
     }
 
-    const postcode = new window.kakao.Postcode({
-      oncomplete: function (data) {
-        const geocoder = new window.kakao.maps.services.Geocoder();
+    let rafId = 0;
+    let cancelled = false;
 
-        geocoder.addressSearch(data.address, function (result, status) {
-          if (status === window.kakao.maps.services.Status.OK) {
-            const lat = Number(result[0].y);
-            const lng = Number(result[0].x);
+    const embedPostcode = () => {
+      if (cancelled || !containerRef.current) return false;
+      containerRef.current.innerHTML = "";
+      const postcode = new window.kakao.Postcode({
+        oncomplete: function (data) {
+          const geocoder = new window.kakao.maps.services.Geocoder();
 
-            onSelect({ lat, lng, address: data.address });
-            onClose();
-          }
-        });
-      },
-      width: "100%",
-      height: "100%",
-    });
+          geocoder.addressSearch(data.address, function (result, status) {
+            if (status === window.kakao.maps.services.Status.OK) {
+              const lat = Number(result[0].y);
+              const lng = Number(result[0].x);
 
-    postcode.embed(containerRef.current);
+              onSelect({ lat, lng, address: data.address });
+              onClose();
+            }
+          });
+        },
+        width: "100%",
+        height: "100%",
+      });
+
+      postcode.embed(containerRef.current);
+      return true;
+    };
+
+    if (!embedPostcode()) {
+      rafId = requestAnimationFrame(() => {
+        embedPostcode();
+      });
+    }
+
+    return () => {
+      cancelled = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      if (containerRef.current) {
+        containerRef.current.innerHTML = "";
+      }
+    };
   }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
-      <DialogContent className="max-w-lg h-[500px] p-0">
+      <DialogContent className="max-w-lg w-[90vw] h-[80vh] p-0 !flex !flex-col overflow-hidden">
         <DialogHeader className="p-4 border-b">
           <DialogTitle>주소 검색</DialogTitle>
         </DialogHeader>
 
-        <div ref={containerRef} className="w-full h-full" />
+        <div ref={containerRef} className="w-full flex-1 min-h-[420px]" />
 
         <div className="p-4 border-t">
           <Button variant="outline" className="w-full" onClick={onClose}>
