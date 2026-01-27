@@ -17,6 +17,7 @@ import { Label } from "../../components/ui/label";
 import { Textarea } from "../../components/ui/textarea";
 import PhotoUploader from "../../components/ui/PhotoUploader";
 import SkillBadge from "../../components/ui/SkillBadge";
+import AddressSearchModal from "../../components/AddressSearchModal";
 import { getSupabase } from "../../lib/supabase";
 import { getSignedUrl } from "../../lib/storage";
 import { useAuth } from "../../contexts/AuthContext";
@@ -278,10 +279,13 @@ export default function BaristaProfileEdit() {
   const [careerInput, setCareerInput] = useState("");
   const [careerItems, setCareerItems] = useState([]);
   const [profilePhotoPreviewUrl, setProfilePhotoPreviewUrl] = useState("");
+  const [showAddressModal, setShowAddressModal] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     address: "",
+    lat: null,
+    lng: null,
     profile_photo: "",
     excellent_skills: [],
     preferred_time: [],
@@ -319,6 +323,8 @@ export default function BaristaProfileEdit() {
         name: profile.name || "",
         phone: profile.phone || "",
         address: profile.address || "",
+        lat: profile.lat ?? null,
+        lng: profile.lng ?? null,
         profile_photo: profile.profile_photo || "",
         excellent_skills: profile.excellent_skills || [],
         preferred_time: profile.preferred_time || [],
@@ -400,6 +406,8 @@ export default function BaristaProfileEdit() {
           name: formData.name,
           phone: formData.phone,
           address: formData.address,
+          lat: formData.lat,
+          lng: formData.lng,
           profile_photo: profilePhotoUrl || null,
           excellent_skills: formData.excellent_skills,
           career_summary: careerItems.join("\n"),
@@ -602,6 +610,14 @@ export default function BaristaProfileEdit() {
                 placeholder="주소를 입력해주세요"
                 className="mt-1.5"
               />
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full mt-2"
+                onClick={() => setShowAddressModal(true)}
+              >
+                주소 검색
+              </Button>
             </div>
 
             <div>
@@ -691,12 +707,24 @@ export default function BaristaProfileEdit() {
               label="라떼아트 사진 (최대 3장)"
             />
 
-            {uploadError && (
-              <p className="text-sm text-red-500">{uploadError}</p>
-            )}
-          </motion.div>
+          {uploadError && (
+            <p className="text-sm text-red-500">{uploadError}</p>
+          )}
+        </motion.div>
+        <AddressSearchModal
+          open={showAddressModal}
+          onClose={() => setShowAddressModal(false)}
+          onSelect={(location) => {
+            setFormData({
+              ...formData,
+              address: location.address,
+              lat: location.lat,
+              lng: location.lng,
+            });
+          }}
+        />
 
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4">
             <Button
               onClick={() => updateMutation.mutate()}
               disabled={

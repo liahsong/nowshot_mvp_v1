@@ -15,6 +15,7 @@ import { Checkbox } from "../../components/ui/checkbox";
 import { Label } from "../../components/ui/label";
 import PhotoUploader from "../../components/ui/PhotoUploader";
 import SkillBadge from "../../components/ui/SkillBadge";
+import AddressSearchModal from "../../components/AddressSearchModal";
 
 const SKILLS = [
   "샷 추출",
@@ -46,12 +47,15 @@ export default function BaristaOnboarding() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [kakaoReady, setKakaoReady] = useState(false);
+  const [showAddressModal, setShowAddressModal] = useState(false);
 
   const [profileData, setProfileData] = useState({
     name: "",
     birth_date: "",
     phone: "",
     address: "",
+    lat: null,
+    lng: null,
     profile_photo: null,
     excellent_skills: [],
     cafe_experience: [],
@@ -242,7 +246,9 @@ export default function BaristaOnboarding() {
       );
 
       let geo = null;
-      if (profileData.address && kakaoReady) {
+      if (profileData.lat != null && profileData.lng != null) {
+        geo = { lat: profileData.lat, lng: profileData.lng };
+      } else if (profileData.address && kakaoReady) {
         try {
           geo = await geocodeAddress(profileData.address);
         } catch (err) {
@@ -469,6 +475,14 @@ export default function BaristaOnboarding() {
                   placeholder="도로명 주소를 입력해주세요"
                   className="mt-1.5"
                 />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={() => setShowAddressModal(true)}
+                >
+                  주소 검색
+                </Button>
               </div>
             </div>
 
@@ -685,6 +699,18 @@ export default function BaristaOnboarding() {
             </Button>
           </div>
         )}
+        <AddressSearchModal
+          open={showAddressModal}
+          onClose={() => setShowAddressModal(false)}
+          onSelect={(location) => {
+            setProfileData({
+              ...profileData,
+              address: location.address,
+              lat: location.lat,
+              lng: location.lng,
+            });
+          }}
+        />
       </motion.div>
     </div>
   );

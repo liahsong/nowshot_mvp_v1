@@ -19,6 +19,7 @@ import {
 import PhotoUploader from "../../components/ui/PhotoUploader";
 import SkillBadge from "../../components/ui/SkillBadge";
 import SplitLayout from "../../components/SplitLayout";
+import AddressSearchModal from "../../components/AddressSearchModal";
 
 const SKILLS = [
   "샷 추출",
@@ -57,6 +58,7 @@ export default function OwnerOnboarding() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [kakaoReady, setKakaoReady] = useState(false);
+  const [showAddressModal, setShowAddressModal] = useState(false);
 
   const [ownerData, setOwnerData] = useState({
     owner_name: "",
@@ -70,6 +72,8 @@ export default function OwnerOnboarding() {
   const [cafeData, setCafeData] = useState({
     cafe_name: "",
     address: "",
+    lat: null,
+    lng: null,
     cafe_type: "",
     photos: [],
     atmosphere_description: "",
@@ -139,7 +143,9 @@ export default function OwnerOnboarding() {
       if (ownerError) throw ownerError;
 
       let geo = null;
-      if (cafeData.address && kakaoReady) {
+      if (cafeData.lat != null && cafeData.lng != null) {
+        geo = { lat: cafeData.lat, lng: cafeData.lng };
+      } else if (cafeData.address && kakaoReady) {
         try {
           geo = await geocodeAddress(cafeData.address);
         } catch (err) {
@@ -151,6 +157,8 @@ export default function OwnerOnboarding() {
         owner_id: user.id,
         name: cafeData.cafe_name,
         address: cafeData.address,
+        lat: geo?.lat ?? null,
+        lng: geo?.lng ?? null,
         cafe_type: cafeData.cafe_type || null,
         description: cafeData.atmosphere_description || null,
       };
@@ -366,6 +374,14 @@ export default function OwnerOnboarding() {
                   placeholder="도로명 주소를 입력해주세요"
                   className="mt-1.5"
                 />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={() => setShowAddressModal(true)}
+                >
+                  주소 검색
+                </Button>
               </div>
               <div>
                 <Label>카페 타입</Label>
@@ -495,6 +511,18 @@ export default function OwnerOnboarding() {
             </Button>
           </div>
         )}
+        <AddressSearchModal
+          open={showAddressModal}
+          onClose={() => setShowAddressModal(false)}
+          onSelect={(location) => {
+            setCafeData({
+              ...cafeData,
+              address: location.address,
+              lat: location.lat,
+              lng: location.lng,
+            });
+          }}
+        />
           </motion.div>
         </div>
       }

@@ -9,14 +9,22 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { getSupabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
+import AddressSearchModal from "../../components/AddressSearchModal";
 
 export default function OwnerProfileEdit() {
   const supabase = getSupabase();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [formData, setFormData] = useState({ owner_name: "", phone: "" });
+  const [formData, setFormData] = useState({
+    owner_name: "",
+    phone: "",
+    address: "",
+    lat: null,
+    lng: null,
+  });
   const [phoneError, setPhoneError] = useState("");
+  const [showAddressModal, setShowAddressModal] = useState(false);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["ownerProfile", user?.id],
@@ -37,6 +45,9 @@ export default function OwnerProfileEdit() {
     setFormData({
       owner_name: profile.owner_name || "",
       phone: profile.phone || "",
+      address: profile.address || "",
+      lat: profile.lat ?? null,
+      lng: profile.lng ?? null,
     });
   }, [profile]);
 
@@ -49,6 +60,9 @@ export default function OwnerProfileEdit() {
           .update({
             owner_name: formData.owner_name,
             phone: formData.phone,
+            address: formData.address,
+            lat: formData.lat,
+            lng: formData.lng,
           })
           .eq("id", profile.id);
         if (error) throw error;
@@ -60,6 +74,9 @@ export default function OwnerProfileEdit() {
         user_email: user.email,
         owner_name: formData.owner_name,
         phone: formData.phone,
+        address: formData.address,
+        lat: formData.lat,
+        lng: formData.lng,
         profile_completed: true,
       });
       if (error) throw error;
@@ -159,6 +176,26 @@ export default function OwnerProfileEdit() {
               )}
             </div>
 
+            <div>
+              <Label>주소</Label>
+              <Input
+                value={formData.address}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, address: e.target.value }))
+                }
+                placeholder="주소를 입력해주세요"
+                className="mt-1.5"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full mt-2"
+                onClick={() => setShowAddressModal(true)}
+              >
+                주소 검색
+              </Button>
+            </div>
+
             <Button
               onClick={() => updateMutation.mutate()}
               disabled={
@@ -177,6 +214,18 @@ export default function OwnerProfileEdit() {
                 </>
               )}
             </Button>
+            <AddressSearchModal
+              open={showAddressModal}
+              onClose={() => setShowAddressModal(false)}
+              onSelect={(location) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  address: location.address,
+                  lat: location.lat,
+                  lng: location.lng,
+                }));
+              }}
+            />
           </motion.div>
         </div>
       }
