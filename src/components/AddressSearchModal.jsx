@@ -3,6 +3,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogDescription,
   DialogTitle,
 } from "../components/ui/dialog";
 import { Button } from "../components/ui/button";
@@ -40,7 +41,10 @@ export default function AddressSearchModal({ open, onClose, onSelect }) {
 
           const geocoder = new window.kakao.maps.services.Geocoder();
           geocoder.addressSearch(address, function (result, status) {
-            if (status === window.kakao.maps.services.Status.OK) {
+            const isOk =
+              status === "OK" ||
+              status === window.kakao?.maps?.services?.Status?.OK;
+            if (isOk) {
               const lat = Number(result[0].y);
               const lng = Number(result[0].x);
               onSelect({ lat, lng, address });
@@ -76,9 +80,12 @@ export default function AddressSearchModal({ open, onClose, onSelect }) {
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
-      <DialogContent className="max-w-lg w-[92vw] h-[85vh] p-0 !flex !flex-col overflow-hidden">
+      <DialogContent className="max-w-none w-[92vw] h-[90vh] p-0 !flex !flex-col overflow-hidden">
         <DialogHeader className="p-4 border-b">
           <DialogTitle>주소 검색</DialogTitle>
+          <DialogDescription className="sr-only">
+            카카오 주소 검색 모달
+          </DialogDescription>
         </DialogHeader>
 
         <div ref={containerRef} className="w-full flex-1 min-h-0" />

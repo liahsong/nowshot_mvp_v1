@@ -86,6 +86,7 @@ const resolveSignedUrl = async (
   fallbackPaths = [],
   preferPublic = false
 ) => {
+  const supabase = getSupabase();
   if (!url || typeof url !== "string") return url;
   const ref = extractStorageRef(url);
   if (!ref) {
