@@ -135,31 +135,31 @@ export default function BaristaHome() {
   useEffect(() => {
     console.log("📍 userLocation", userLocation); // ✅ 수정됨
   }, [userLocation]);
-    //추가 거리
-    useEffect(() => {
-      if (!userLocation) return;
-  
-      // 거리 필터 RPC 호출
-      const fetchByDistance = async () => {
-        const { data, error } = await supabase.rpc(
-          "job_posts_within_distance_simple",
-          {
-            user_lat: userLocation.lat,
-            user_lng: userLocation.lng,
-            max_distance_km: detailedFilters.maxDistanceKm,
-            min_wage: detailedFilters.minWage,
-            max_wage: detailedFilters.maxWage,
-          }
-        );
-  
-        if (error) {
-          console.error("❌ 거리 RPC 에러:", error);
-          setRpcPosts([]);
-        } else {
-          setRpcPosts(data || []);
+  //추가 거리
+  useEffect(() => {
+    if (!userLocation) return;
+
+    // 거리 필터 RPC 호출
+    const fetchByDistance = async () => {
+      const { data, error } = await supabase.rpc(
+        "job_posts_within_distance_simple",
+        {
+          user_lat: userLocation.lat,
+          user_lng: userLocation.lng,
+          max_distance_km: detailedFilters.maxDistanceKm,
+          min_wage: detailedFilters.minWage,
+          max_wage: detailedFilters.maxWage,
         }
-      };
-  
+      );
+
+      if (error) {
+        console.error("❌ 거리 RPC 에러:", error);
+        setRpcPosts([]);
+      } else {
+        setRpcPosts(data || []);
+      }
+    };
+
     fetchByDistance();
   }, [userLocation, detailedFilters]);
 
@@ -235,15 +235,6 @@ export default function BaristaHome() {
         .filter(Boolean),
     [applications]
   );
-    if (error) {
-      console.error("❌ 거리 RPC 에러:", error);
-    } else {
-      console.log("✅ 거리 RPC 결과:", data);
-      setRpcPosts(data); // ⭐️ 이 줄이 핵심
-    }
-  
-  };
-  
 
   const filteredPosts = useMemo(() => {
     let result = rpcPosts; //⭐️ 반드시 rpcPosts 기준
