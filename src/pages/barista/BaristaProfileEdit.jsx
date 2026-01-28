@@ -414,7 +414,8 @@ export default function BaristaProfileEdit() {
           await uploadFile(BUCKETS.latteArt, user.id, item.file, "latte-art")
         );
       }
-
+       //추가//
+       console.log("저장직전 lat/lng", formData.lat, formData.lng)
       const { error } = await supabase.from("barista_profiles").upsert(
         {
           user_id: user.id,
@@ -731,17 +732,19 @@ export default function BaristaProfileEdit() {
           )}
         </motion.div>
         <AddressSearchModal
-          open={showAddressModal}
-          onClose={() => setShowAddressModal(false)}
-          onSelect={(location) => {
-            setFormData({
-              ...formData,
-              address: location.address,
-              lat: location.lat,
-              lng: location.lng,
-            });
+          open={isAddressModalOpen}
+          onClose={() => setIsAddressModalOpen(false)}
+          onSelect={({ lat, lng, address }) => {
+            console.log("주소 선택됨:", lat, lng, address);
+            setFormData((prev) => ({
+              ...prev,
+              address,
+              lat,
+              lng,
+            }));
           }}
         />
+
 
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4">
             <Button

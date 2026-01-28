@@ -517,13 +517,14 @@ export default function OwnerOnboarding() {
         <AddressSearchModal
           open={showAddressModal}
           onClose={() => setShowAddressModal(false)}
-          onSelect={(location) => {
-            setCafeData({
-              ...cafeData,
-              address: location.address,
-              lat: location.lat,
-              lng: location.lng,
-            });
+          onSelect={({ lat, lng, address }) => {
+            console.log("주소 선택됨:", lat, lng, address);
+            setCafeData((prev) => ({
+              ...prev,
+              address,
+              lat,
+              lng,
+            }));
           }}
         />
           </motion.div>

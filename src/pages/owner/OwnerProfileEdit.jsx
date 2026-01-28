@@ -220,12 +220,13 @@ export default function OwnerProfileEdit() {
             <AddressSearchModal
               open={showAddressModal}
               onClose={() => setShowAddressModal(false)}
-              onSelect={(location) => {
+              onSelect={({ lat, lng, address }) => {
+                console.log("주소 선택됨:", lat, lng, address);
                 setFormData((prev) => ({
                   ...prev,
-                  address: location.address,
-                  lat: location.lat,
-                  lng: location.lng,
+                  address,
+                  lat,
+                  lng,
                 }));
               }}
             />

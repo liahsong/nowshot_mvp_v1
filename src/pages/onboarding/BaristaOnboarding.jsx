@@ -718,13 +718,14 @@ export default function BaristaOnboarding() {
         <AddressSearchModal
           open={showAddressModal}
           onClose={() => setShowAddressModal(false)}
-          onSelect={(location) => {
-            setProfileData({
-              ...profileData,
-              address: location.address,
-              lat: location.lat,
-              lng: location.lng,
-            });
+          onSelect={({ lat, lng, address }) => {
+            console.log("주소 선택됨:", lat, lng, address);
+            setProfileData((prev) => ({
+              ...prev,
+              address,
+              lat,
+              lng,
+            }));
           }}
         />
       </motion.div>
