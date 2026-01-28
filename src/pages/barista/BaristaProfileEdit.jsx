@@ -338,8 +338,9 @@ export default function BaristaProfileEdit() {
         name: profile.name || "",
         phone: profile.phone || "",
         address: profile.address || "",
-        lat: profile.lat ?? null,
-        lng: profile.lng ?? null,
+        // 🔧 기존 profile 값이 있을 때만 덮어쓰기
+        lat: formData.lat ?? profile.lat ?? null,
+        lng: formData.lng ?? profile.lng ?? null,
         profile_photo: profile.profile_photo || "",
         excellent_skills: profile.excellent_skills || [],
         preferred_time: profile.preferred_time || [],
