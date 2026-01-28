@@ -732,8 +732,8 @@ export default function BaristaProfileEdit() {
           )}
         </motion.div>
         <AddressSearchModal
-          open={isAddressModalOpen}
-          onClose={() => setIsAddressModalOpen(false)}
+          open={showAddressModal}
+          onClose={() => setShowAddressModal(false)}
           onSelect={({ lat, lng, address }) => {
             console.log("주소 선택됨:", lat, lng, address);
             setFormData((prev) => ({
