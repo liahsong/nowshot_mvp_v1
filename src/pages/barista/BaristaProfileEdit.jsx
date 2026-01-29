@@ -22,6 +22,7 @@ import { getSupabase } from "../../lib/supabase";
 import { getSignedUrl } from "../../lib/storage";
 import { useAuth } from "../../contexts/AuthContext";
 import { resizeImageFile } from "../../utils/resizeImage";
+import { loadKakaoSdk, geocodeAddress } from "../../lib/kakao";
 
 const SKILLS = [
   "샷 추출",
@@ -253,7 +254,7 @@ const parseCareerSummary = (value) => {
     .filter(Boolean);
 };
 
-const uploadFile = async (bucket, userId, file, folder) => {
+const uploadFile = async (supabase, bucket, userId, file, folder) => {
   if (file.size > MAX_FILE_SIZE) {
     throw new Error("파일은 50MB 이하만 업로드할 수 있습니다.");
   }
@@ -385,6 +386,19 @@ export default function BaristaProfileEdit() {
       if (!user) throw new Error("로그인이 필요합니다.");
       setUploadError("");
 
+      let latValue = formData.lat;
+      let lngValue = formData.lng;
+      if (formData.address && (latValue == null || lngValue == null)) {
+        try {
+          await loadKakaoSdk();
+          const geo = await geocodeAddress(formData.address);
+          latValue = geo?.lat ?? latValue;
+          lngValue = geo?.lng ?? lngValue;
+        } catch (error) {
+          console.warn("Profile geocode failed:", error);
+        }
+      }
+
       let profilePhotoUrl = "";
       if (formData.profile_photo) {
         if (typeof formData.profile_photo === "string") {
@@ -393,6 +407,7 @@ export default function BaristaProfileEdit() {
           );
         } else if (formData.profile_photo.file) {
           profilePhotoUrl = await uploadFile(
+            supabase,
             BUCKETS.profile,
             user.id,
             formData.profile_photo.file,
@@ -411,7 +426,13 @@ export default function BaristaProfileEdit() {
       const newLatteArtUrls = [];
       for (const item of newLatteArtItems) {
         newLatteArtUrls.push(
-          await uploadFile(BUCKETS.latteArt, user.id, item.file, "latte-art")
+          await uploadFile(
+            supabase,
+            BUCKETS.latteArt,
+            user.id,
+            item.file,
+            "latte-art"
+          )
         );
       }
        //추가//
@@ -423,8 +444,8 @@ export default function BaristaProfileEdit() {
           name: formData.name,
           phone: formData.phone,
           address: formData.address,
-          lat: formData.lat,
-          lng: formData.lng,
+          lat: latValue,
+          lng: lngValue,
           profile_photo: profilePhotoUrl || null,
           excellent_skills: formData.excellent_skills,
           career_summary: careerItems.join("\n"),
