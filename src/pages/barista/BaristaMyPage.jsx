@@ -186,6 +186,8 @@ export default function BaristaMyPage() {
                     <img
                       src={profilePhotoUrl || profile.profile_photo}
                       alt=""
+                      loading="eager"
+                      fetchpriority="high"
                       className="w-full h-full object-cover"
                     />
                   ) : (

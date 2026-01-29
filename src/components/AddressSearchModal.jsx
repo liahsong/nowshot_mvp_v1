@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "../components/ui/dialog";
 import { Button } from "../components/ui/button";
+import { loadKakaoSdk } from "../lib/kakao";
 
 export default function AddressSearchModal({ open, onClose, onSelect }) {
   const containerRef = useRef(null);
@@ -19,17 +20,24 @@ export default function AddressSearchModal({ open, onClose, onSelect }) {
       return;
     }
 
-    if (!window.kakao || !window.kakao.Postcode) {
-      console.error("카카오 주소 SDK 로드 안됨");
-      return;
-    }
-
     let rafId = 0;
     let cancelled = false;
+
+    const ensureKakao = async () => {
+      try {
+        await loadKakaoSdk();
+      } catch (error) {
+        console.warn("Kakao SDK load failed:", error);
+      }
+    };
 
     const embedPostcode = () => {
       if (cancelled || !containerRef.current) return false;
       containerRef.current.innerHTML = "";
+      if (!window.kakao || !window.kakao.Postcode) {
+        console.error("카카오 주소 SDK 로드 안됨");
+        return false;
+      }
       const postcode = new window.kakao.Postcode({
         oncomplete: function (data) {
           const address = data.roadAddress || data.address;
@@ -63,11 +71,13 @@ export default function AddressSearchModal({ open, onClose, onSelect }) {
       return true;
     };
 
-    if (!embedPostcode()) {
-      rafId = requestAnimationFrame(() => {
-        embedPostcode();
-      });
-    }
+    ensureKakao().finally(() => {
+      if (!embedPostcode()) {
+        rafId = requestAnimationFrame(() => {
+          embedPostcode();
+        });
+      }
+    });
 
     return () => {
       cancelled = true;
