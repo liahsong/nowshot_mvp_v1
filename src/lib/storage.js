@@ -8,20 +8,47 @@ export const getSignedUrl = async ({
   if (!bucket || !path) return "";
 
   const supabase = getSupabase(); // ✅ lazy-init 사용
-  const publicBuckets = new Set(["cafe_photos"]);
+  const publicBuckets = new Set(["cafe_photos", "barista_profile"]);
 
   const raw = String(path);
+  let resolvedBucket = bucket;
+  let resolvedPath = raw;
+
   if (raw.startsWith("http://") || raw.startsWith("https://")) {
-    return raw;
+    const match = raw.match(
+      /\/storage\/v1\/object\/(public|sign)\/([^/]+)\/(.+?)(?:\?|$)/
+    );
+    if (!match) return raw;
+    resolvedBucket = match[2];
+    resolvedPath = match[3];
+    if (match[1] === "public") {
+      const publicPath = resolvedPath.replace(/^\/+/, "");
+      const { data: publicData } = supabase.storage
+        .from(resolvedBucket)
+        .getPublicUrl(publicPath);
+      return publicData?.publicUrl || raw;
+    }
   }
 
-  const cleaned = raw.replace(/^\/+/, "");
-  if (publicBuckets.has(bucket)) {
+  if (resolvedPath.startsWith(`${resolvedBucket}/`)) {
+    resolvedPath = resolvedPath.slice(resolvedBucket.length + 1);
+  }
+
+  const cleaned = resolvedPath.replace(/^\/+/, "");
+  if (publicBuckets.has(resolvedBucket)) {
     const { data: publicData } = supabase.storage
-      .from(bucket)
+      .from(resolvedBucket)
       .getPublicUrl(cleaned);
     return publicData?.publicUrl || "";
   }
+
+  const { data: directData, error: directError } = await supabase.storage
+    .from(resolvedBucket)
+    .createSignedUrl(cleaned, expiresIn);
+  if (!directError && directData?.signedUrl) {
+    return directData.signedUrl;
+  }
+
   let accessToken = null;
   const { data: sessionData } = await supabase.auth.getSession();
   accessToken = sessionData?.session?.access_token || null;
@@ -31,13 +58,13 @@ export const getSignedUrl = async ({
   }
   if (!accessToken) {
     const { data: publicData } = supabase.storage
-      .from(bucket)
+      .from(resolvedBucket)
       .getPublicUrl(cleaned);
     return publicData?.publicUrl || "";
   }
 
   const { data, error } = await supabase.functions.invoke("sign-storage", {
-    body: { bucket, path: cleaned, expiresIn },
+    body: { bucket: resolvedBucket, path: cleaned, expiresIn },
     headers: { authorization: `Bearer ${accessToken}` },
   });
 
@@ -46,7 +73,7 @@ export const getSignedUrl = async ({
       console.warn("sign-storage failed:", error.message || error);
     }
     const { data: publicData } = supabase.storage
-      .from(bucket)
+      .from(resolvedBucket)
       .getPublicUrl(cleaned);
     return publicData?.publicUrl || "";
   }
@@ -56,7 +83,7 @@ export const getSignedUrl = async ({
   }
 
   const { data: publicData } = supabase.storage
-    .from(bucket)
+    .from(resolvedBucket)
     .getPublicUrl(cleaned);
   return publicData?.publicUrl || "";
 };
