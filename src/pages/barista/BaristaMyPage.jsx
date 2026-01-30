@@ -83,57 +83,17 @@ export default function BaristaMyPage() {
   }, [reviews]);
 
   useEffect(() => {
-    let active = true;
-    const resolvePhoto = async () => {
-      if (!profile?.profile_photo) {
-        if (active) setProfilePhotoUrl("");
-        return;
-      }
-      const ref = extractStorageRef(profile.profile_photo);
-      let bucket = "barista_profile";
-      let path = profile.profile_photo;
-      if (ref) {
-        bucket = ref.bucket;
-        path = ref.path;
-      } else if (profile.profile_photo.startsWith("http")) {
-        if (active) setProfilePhotoUrl(profile.profile_photo);
-        return;
-      }
+    if (!profile?.profile_photo) {
+      setProfilePhotoUrl("");
+      return;
+    }
 
-      if (!path.includes("/") && user?.id) {
-        path = `${user.id}/profile/${path}`;
-      }
+    if (profile.profile_photo.startsWith("http")) {
+      setProfilePhotoUrl(profile.profile_photo);
+      return;
+    }
 
-      if (path.startsWith(`${bucket}/`)) {
-        path = path.slice(bucket.length + 1);
-      }
-
-      const candidates = [
-        path.replace(/^\/+/, ""),
-        `profile/${path.replace(/^\/+/, "").replace(/^profile\//, "")}`,
-      ];
-
-      let signedUrl = "";
-      for (const candidate of candidates) {
-        signedUrl = await getSignedUrl({
-          bucket,
-          path: candidate,
-          expiresIn: 3600,
-        });
-        if (signedUrl) break;
-      }
-
-      const { data, error } = signedUrl
-        ? { data: { signedUrl }, error: null }
-        : { data: null, error: { message: "sign failed" } };
-      if (active) {
-        setProfilePhotoUrl(!error && data?.signedUrl ? data.signedUrl : "");
-      }
-    };
-    resolvePhoto();
-    return () => {
-      active = false;
-    };
+    setProfilePhotoUrl("");
   }, [profile?.profile_photo]);
 
   const handleLogout = async () => {

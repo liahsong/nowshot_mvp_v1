@@ -184,64 +184,17 @@ export default function BaristaHome() {
   }, [rpcPosts]);
 
   useEffect(() => {
-    let active = true;
-    const resolvePhoto = async () => {
-      try {
-        if (!profile?.profile_photo) {
-          if (active) setProfilePhotoUrl("");
-          return;
-        }
-        const match = profile.profile_photo.match(
-          /\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+?)(?:\?|$)/
-        );
-        let bucket = "barista_profile";
-        let path = profile.profile_photo;
-        if (match) {
-          bucket = match[1];
-          path = match[2];
-        } else if (profile.profile_photo.startsWith("http")) {
-          if (active) setProfilePhotoUrl(profile.profile_photo);
-          return;
-        }
+    if (!profile?.profile_photo) {
+      setProfilePhotoUrl("");
+      return;
+    }
 
-        if (!path.includes("/") && user?.id) {
-          path = `${user.id}/profile/${path}`;
-        }
+    if (profile.profile_photo.startsWith("http")) {
+      setProfilePhotoUrl(profile.profile_photo);
+      return;
+    }
 
-        if (path.startsWith(`${bucket}/`)) {
-          path = path.slice(bucket.length + 1);
-        }
-
-        const candidates = [
-          path.replace(/^\/+/, ""),
-          `profile/${path.replace(/^\/+/, "").replace(/^profile\//, "")}`,
-        ];
-
-        let signedUrl = "";
-        for (const candidate of candidates) {
-          signedUrl = await getSignedUrl({
-            bucket,
-            path: candidate,
-            expiresIn: 3600,
-          });
-          if (signedUrl) break;
-        }
-
-        const { data, error } = signedUrl
-          ? { data: { signedUrl }, error: null }
-          : { data: null, error: { message: "sign failed" } };
-        if (active) {
-          setProfilePhotoUrl(!error && data?.signedUrl ? data.signedUrl : "");
-        }
-      } catch (error) {
-        console.warn("profile photo resolve failed:", error); // ✅ 수정됨
-        if (active) setProfilePhotoUrl("");
-      }
-    };
-    resolvePhoto();
-    return () => {
-      active = false;
-    };
+    setProfilePhotoUrl("");
   }, [profile?.profile_photo]);
 
   const appliedPostIds = useMemo(
@@ -377,7 +330,8 @@ export default function BaristaHome() {
                     <img
                       src={profilePhotoUrl || profile.profile_photo}
                       alt=""
-                      loading="lazy"
+                      loading="eager"
+                      fetchpriority="high"
                       decoding="async"
                       className="w-full h-full object-cover"
                     />

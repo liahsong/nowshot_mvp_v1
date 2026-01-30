@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { getSupabase } from "../lib/supabase";
-import { getSignedUrl } from "../lib/storage";
 
 export default function ApplicationList() {
   const supabase = getSupabase();
@@ -25,49 +24,6 @@ export default function ApplicationList() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const normalizeProfilePath = (value, userId) => {
-        if (!value || typeof value !== "string") return "";
-        if (value.includes("/")) return value;
-        if (!userId) return value;
-        return `${userId}/profile/${value}`;
-      };
-
-      const resolvePhotoUrl = async (
-        rawUrl,
-        defaultBucket = "barista_profile"
-      ) => {
-        if (!rawUrl || typeof rawUrl !== "string") return "";
-        const match = rawUrl.match(
-          /\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+?)(?:\?|$)/
-        );
-        let bucket = defaultBucket;
-        let path = rawUrl;
-        if (match) {
-          bucket = match[1];
-          path = match[2];
-        } else if (rawUrl.startsWith("http")) {
-          return rawUrl;
-        }
-
-        const normalized = path.replace(/^\/+/, "");
-        const candidates = [
-          normalized,
-          normalized.replace(/^barista_profile\//, ""),
-          `profile/${normalized.replace(/^profile\//, "")}`,
-        ];
-
-        for (const candidate of candidates) {
-          const signedUrl = await getSignedUrl({
-            bucket,
-            path: candidate,
-            expiresIn: 3600,
-          });
-          if (signedUrl) return signedUrl;
-        }
-
-        return rawUrl;
-      };
-
         if (postId) {
           const { data: postRow } = await supabase
             .from("job_posts")
@@ -102,14 +58,10 @@ export default function ApplicationList() {
                     birth_date: profile.birth_date,
                     phone: profile.phone,
                   };
-                  const normalized = normalizeProfilePath(
-                    profile.profile_photo,
-                    profile.user_id
-                  );
-                  photoMap[profile.user_email] = await resolvePhotoUrl(
-                    normalized,
-                    "barista_profile"
-                  );
+                  photoMap[profile.user_email] =
+                    profile.profile_photo?.startsWith("http")
+                      ? profile.profile_photo
+                      : "";
                 })
               );
             }
@@ -120,14 +72,9 @@ export default function ApplicationList() {
             await Promise.all(
               nextApps.map(async (app) => {
                 if (!app.barista_photo || !app.id) return;
-                const normalized = normalizeProfilePath(
-                  app.barista_photo,
-                  basicsMap[app.barista_email]?.user_id
-                );
-                appPhotoMap[app.id] = await resolvePhotoUrl(
-                  normalized,
-                  "barista_profile"
-                );
+                appPhotoMap[app.id] = app.barista_photo?.startsWith("http")
+                  ? app.barista_photo
+                  : "";
               })
             );
             setApplicationPhotos(appPhotoMap);

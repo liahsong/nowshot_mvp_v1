@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getSupabase } from "../lib/supabase";
-import { getSignedUrl } from "../lib/storage";
 import { Badge } from "../components/ui/badge";
 import { Textarea } from "../components/ui/textarea";
 import { ArrowLeft, MapPin, Phone } from "lucide-react";
@@ -20,49 +19,6 @@ export default function ApplicationDetail() {
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
-
-      const normalizeProfilePath = (value, userId) => {
-        if (!value || typeof value !== "string") return "";
-        if (value.includes("/")) return value;
-        if (!userId) return value;
-        return `${userId}/profile/${value}`;
-      };
-
-      const resolvePhotoUrl = async (
-        rawUrl,
-        defaultBucket = "barista_profile"
-      ) => {
-        if (!rawUrl || typeof rawUrl !== "string") return "";
-        const match = rawUrl.match(
-          /\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+?)(?:\?|$)/
-        );
-        let bucket = defaultBucket;
-        let path = rawUrl;
-        if (match) {
-          bucket = match[1];
-          path = match[2];
-        } else if (rawUrl.startsWith("http")) {
-          return rawUrl;
-        }
-
-        const normalized = path.replace(/^\/+/, "");
-        const candidates = [
-          normalized,
-          normalized.replace(/^barista_profile\//, ""),
-          `profile/${normalized.replace(/^profile\//, "")}`,
-        ];
-
-        for (const candidate of candidates) {
-          const signedUrl = await getSignedUrl({
-            bucket,
-            path: candidate,
-            expiresIn: 3600,
-          });
-          if (signedUrl) return signedUrl;
-        }
-
-        return rawUrl;
-      };
 
       const { data: appRow } = await supabase
         .from("applications")
@@ -83,20 +39,16 @@ export default function ApplicationDetail() {
             birth_date: profileRow.birth_date,
             phone: profileRow.phone,
           });
-          const normalizedProfile = normalizeProfilePath(
-            profileRow.profile_photo,
-            profileRow.user_id
-          );
           setProfilePhotoUrl(
-            await resolvePhotoUrl(normalizedProfile, "barista_profile")
+            profileRow.profile_photo?.startsWith("http")
+              ? profileRow.profile_photo
+              : ""
           );
           if (appRow?.barista_photo) {
-            const normalizedApp = normalizeProfilePath(
-              appRow.barista_photo,
-              profileRow.user_id
-            );
             setApplicationPhotoUrl(
-              await resolvePhotoUrl(normalizedApp, "barista_profile")
+              appRow.barista_photo?.startsWith("http")
+                ? appRow.barista_photo
+                : ""
             );
           }
         }
