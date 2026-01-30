@@ -442,7 +442,7 @@ export default function BaristaHome() {
                 <DateFilter
                   selectedDate={selectedDate}
                   onDateSelect={setSelectedDate}
-                  jobPosts={jobPosts}
+                  jobPosts={mergedPosts}
                 />
               </div>
 
@@ -476,10 +476,10 @@ export default function BaristaHome() {
 
             <div>
               <h2 className="font-semibold text-gray-900 mb-3">
-                공고 {rpcPosts.length}건
+                공고 {filteredPosts.length}건
               </h2>
 
-              {rpcPosts.length === 0 ? ( // ✅ 수정됨
+              {filteredPosts.length === 0 ? ( // ✅ 수정됨
                 <div className="bg-white rounded-2xl p-8 text-center">
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                     <Briefcase className="w-8 h-8 text-gray-400" />
@@ -488,7 +488,7 @@ export default function BaristaHome() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {rpcPosts.map((post, index) => {
+                  {filteredPosts.map((post, index) => {
                     const displayPost = jobPostsById[post.id] || post;
                     return (
                     <motion.div
