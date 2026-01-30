@@ -8,7 +8,6 @@ import { Button } from "../../components/ui/button";
 import { Textarea } from "../../components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { getSupabase } from "../../lib/supabase";
-import { getSignedUrl } from "../../lib/storage";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "../../components/ui/use-toast";
 
@@ -99,27 +98,31 @@ export default function BaristaDetail() {
           .eq("user_email", appRow.barista_email)
           .maybeSingle();
         if (profileRow?.profile_photo) {
-          const normalized = normalizeProfilePath(
-            profileRow.profile_photo,
-            profileRow.user_id
-          );
-          const signedUrl = await getSignedUrl({
-            bucket: "barista_profile",
-            path: normalized,
-            expiresIn: 3600,
-          });
-          if (signedUrl) setProfilePhotoUrl(signedUrl);
+          if (profileRow.profile_photo.startsWith("http")) {
+            setProfilePhotoUrl(profileRow.profile_photo);
+          } else {
+            const normalized = normalizeProfilePath(
+              profileRow.profile_photo,
+              profileRow.user_id
+            );
+            const { data } = supabase.storage
+              .from("barista_profile")
+              .getPublicUrl(normalized);
+            if (data?.publicUrl) setProfilePhotoUrl(data.publicUrl);
+          }
         } else if (appRow?.barista_photo) {
-          const normalized = normalizeProfilePath(
-            appRow.barista_photo,
-            profileRow?.user_id
-          );
-          const signedUrl = await getSignedUrl({
-            bucket: "barista_profile",
-            path: normalized,
-            expiresIn: 3600,
-          });
-          if (signedUrl) setProfilePhotoUrl(signedUrl);
+          if (appRow.barista_photo.startsWith("http")) {
+            setProfilePhotoUrl(appRow.barista_photo);
+          } else {
+            const normalized = normalizeProfilePath(
+              appRow.barista_photo,
+              profileRow?.user_id
+            );
+            const { data } = supabase.storage
+              .from("barista_profile")
+              .getPublicUrl(normalized);
+            if (data?.publicUrl) setProfilePhotoUrl(data.publicUrl);
+          }
         }
       }
     };

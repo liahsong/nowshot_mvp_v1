@@ -19,7 +19,6 @@ import PhotoUploader from "../../components/ui/PhotoUploader";
 import SkillBadge from "../../components/ui/SkillBadge";
 import AddressSearchModal from "../../components/AddressSearchModal";
 import { getSupabase } from "../../lib/supabase";
-import { getSignedUrl } from "../../lib/storage";
 import { useAuth } from "../../contexts/AuthContext";
 import { resizeImageFile } from "../../utils/resizeImage";
 import { loadKakaoSdk, geocodeAddress } from "../../lib/kakao";
@@ -364,12 +363,15 @@ export default function BaristaProfileEdit() {
         if (active) setProfilePhotoPreviewUrl(formData.profile_photo.previewUrl);
         return;
       }
-      const resolved = await getSignedUrl({
-        bucket: "barista_profile",
-        path: normalizeProfilePhotoPath(formData.profile_photo),
-        expiresIn: 3600,
-      });
-      if (active) setProfilePhotoPreviewUrl(resolved || "");
+      if (formData.profile_photo.startsWith("http")) {
+        if (active) setProfilePhotoPreviewUrl(formData.profile_photo);
+        return;
+      }
+      const path = normalizeProfilePhotoPath(formData.profile_photo);
+      const { data } = supabase.storage
+        .from("barista_profile")
+        .getPublicUrl(path);
+      if (active) setProfilePhotoPreviewUrl(data?.publicUrl || "");
     };
     resolveProfilePhoto();
     return () => {

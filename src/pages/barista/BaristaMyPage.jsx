@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { getSupabase } from "../../lib/supabase";
-import { getSignedUrl } from "../../lib/storage";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function BaristaMyPage() {
@@ -25,15 +24,6 @@ export default function BaristaMyPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
-
-  const extractStorageRef = (url) => {
-    if (!url || typeof url !== "string") return null;
-    const match = url.match(
-      /\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+?)(?:\?|$)/
-    );
-    if (!match) return null;
-    return { bucket: match[1], path: match[2] };
-  };
 
   const { data: profile } = useQuery({
     queryKey: ["baristaProfile", user?.id],

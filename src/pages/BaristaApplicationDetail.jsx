@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getSupabase } from "../lib/supabase";
-import { getSignedUrl } from "../lib/storage";
 import { Badge } from "../components/ui/badge";
 import { Textarea } from "../components/ui/textarea";
 import { ArrowLeft, MapPin } from "lucide-react";
@@ -33,12 +32,14 @@ export default function BaristaApplicationDetail() {
 
       if (appRow?.barista_photo) {
         const rawPath = String(appRow.barista_photo);
-        const signedUrl = await getSignedUrl({
-          bucket: "barista_profile",
-          path: rawPath,
-          expiresIn: 3600,
-        });
-        setProfilePhotoUrl(signedUrl || rawPath);
+        if (rawPath.startsWith("http")) {
+          setProfilePhotoUrl(rawPath);
+        } else {
+          const { data } = supabase.storage
+            .from("barista_profile")
+            .getPublicUrl(rawPath);
+          setProfilePhotoUrl(data?.publicUrl || "");
+        }
       }
 
       setLoading(false);

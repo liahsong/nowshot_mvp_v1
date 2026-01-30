@@ -8,7 +8,6 @@ import { Button } from "../../components/ui/button";
 import { MapPin, User as UserIcon, ChevronRight, Star, ArrowLeft } from "lucide-react";
 import { getSupabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
-import { getSignedUrl } from "../../lib/storage";
 
 const normalizeProfilePath = (value, userId) => {
   if (!value || typeof value !== "string") return "";
@@ -100,18 +99,22 @@ export default function BaristaManagement() {
       await Promise.all(
         (profiles ?? []).map(async (profile) => {
           nextProfileMap[profile.user_email] = profile;
+          if (!profile?.profile_photo) {
+            nextPhotoMap[profile.user_email] = "";
+            return;
+          }
+          if (profile.profile_photo.startsWith("http")) {
+            nextPhotoMap[profile.user_email] = profile.profile_photo;
+            return;
+          }
           const normalized = normalizeProfilePath(
             profile.profile_photo,
             profile.user_id
           );
-          const signedUrl = await getSignedUrl({
-            bucket: "barista_profile",
-            path: normalized,
-            expiresIn: 3600,
-          });
-          if (signedUrl) {
-            nextPhotoMap[profile.user_email] = signedUrl;
-          }
+          const { data } = supabase.storage
+            .from("barista_profile")
+            .getPublicUrl(normalized);
+          nextPhotoMap[profile.user_email] = data?.publicUrl || "";
         })
       );
 

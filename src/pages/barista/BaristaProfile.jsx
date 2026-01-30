@@ -9,7 +9,6 @@ import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
 import SkillBadge from "../../components/ui/SkillBadge";
 import { getSupabase } from "../../lib/supabase";
-import { getSignedUrl } from "../../lib/storage";
 import { useAuth } from "../../contexts/AuthContext";
 
 const SKILLS = [
@@ -276,12 +275,15 @@ export default function BaristaProfile() {
         if (active) setProfilePhotoUrl("");
         return;
       }
-      const resolved = await getSignedUrl({
-        bucket: "barista_profile",
-        path: normalizeProfilePath(profile.profile_photo, user?.id),
-        expiresIn: 3600,
-      });
-      if (active) setProfilePhotoUrl(resolved || "");
+      if (profile.profile_photo.startsWith("http")) {
+        if (active) setProfilePhotoUrl(profile.profile_photo);
+        return;
+      }
+      const path = normalizeProfilePath(profile.profile_photo, user?.id);
+      const { data } = supabase.storage
+        .from("barista_profile")
+        .getPublicUrl(path);
+      if (active) setProfilePhotoUrl(data?.publicUrl || "");
     };
     resolveProfilePhoto();
     return () => {
