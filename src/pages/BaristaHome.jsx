@@ -5,7 +5,6 @@ import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { getSupabase } from "../lib/supabase";
-import { getSignedUrl } from "../lib/storage";
 import {
   MapPin,
   Clock,
@@ -185,16 +184,24 @@ export default function BaristaHome() {
 
   useEffect(() => {
     if (!profile?.profile_photo) {
-      setProfilePhotoUrl("");
+      setProfilePhotoUrl(null);
       return;
     }
 
-    if (profile.profile_photo.startsWith("http")) {
+    const isPublicUrl =
+      typeof profile.profile_photo === "string" &&
+      (profile.profile_photo.startsWith("http://") ||
+        profile.profile_photo.startsWith("https://") ||
+        profile.profile_photo.includes("/storage/v1/object/public/"));
+    if (isPublicUrl) {
       setProfilePhotoUrl(profile.profile_photo);
       return;
     }
 
-    setProfilePhotoUrl("");
+    const { data } = supabase.storage
+      .from("barista_profile")
+      .getPublicUrl(profile.profile_photo);
+    setProfilePhotoUrl(data?.publicUrl || null);
   }, [profile?.profile_photo]);
 
   const appliedPostIds = useMemo(
@@ -326,9 +333,9 @@ export default function BaristaHome() {
               </div>
               <Link to="/barista/baristamypage">
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-[#1FBECC]/10 flex items-center justify-center">
-                  {profile?.profile_photo ? (
+                  {profilePhotoUrl ? (
                     <img
-                      src={profilePhotoUrl || profile.profile_photo}
+                      src={profilePhotoUrl}
                       alt=""
                       loading="eager"
                       fetchpriority="high"

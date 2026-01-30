@@ -21,6 +21,21 @@ export default function ApplicationList() {
   const [profilePhotos, setProfilePhotos] = useState({});
   const [applicationPhotos, setApplicationPhotos] = useState({});
   const [profileBasics, setProfileBasics] = useState({});
+  const resolveProfilePhoto = (profilePhoto) => {
+    const isPublicUrl =
+      typeof profilePhoto === "string" &&
+      (profilePhoto.startsWith("http://") ||
+        profilePhoto.startsWith("https://") ||
+        profilePhoto.includes("/storage/v1/object/public/"));
+    const imageUrl = isPublicUrl
+      ? profilePhoto
+      : profilePhoto
+        ? supabase.storage
+            .from("barista_profile")
+            .getPublicUrl(profilePhoto).data.publicUrl
+        : "";
+    return imageUrl || "";
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,10 +73,9 @@ export default function ApplicationList() {
                     birth_date: profile.birth_date,
                     phone: profile.phone,
                   };
-                  photoMap[profile.user_email] =
-                    profile.profile_photo?.startsWith("http")
-                      ? profile.profile_photo
-                      : "";
+                  photoMap[profile.user_email] = resolveProfilePhoto(
+                    profile.profile_photo
+                  );
                 })
               );
             }
@@ -72,9 +86,7 @@ export default function ApplicationList() {
             await Promise.all(
               nextApps.map(async (app) => {
                 if (!app.barista_photo || !app.id) return;
-                appPhotoMap[app.id] = app.barista_photo?.startsWith("http")
-                  ? app.barista_photo
-                  : "";
+                appPhotoMap[app.id] = resolveProfilePhoto(app.barista_photo);
               })
             );
             setApplicationPhotos(appPhotoMap);
@@ -109,13 +121,8 @@ export default function ApplicationList() {
                 birth_date: profile.birth_date,
                 phone: profile.phone,
               };
-              const normalized = normalizeProfilePath(
-                profile.profile_photo,
-                profile.user_id
-              );
-              photoMap[profile.user_email] = await resolvePhotoUrl(
-                normalized,
-                "barista_profile"
+              photoMap[profile.user_email] = resolveProfilePhoto(
+                profile.profile_photo
               );
             })
           );
@@ -127,14 +134,7 @@ export default function ApplicationList() {
         await Promise.all(
           nextApps.map(async (app) => {
             if (!app.barista_photo || !app.id) return;
-            const normalized = normalizeProfilePath(
-              app.barista_photo,
-              basicsMap[app.barista_email]?.user_id
-            );
-            appPhotoMap[app.id] = await resolvePhotoUrl(
-              normalized,
-              "barista_profile"
-            );
+            appPhotoMap[app.id] = resolveProfilePhoto(app.barista_photo);
           })
         );
         setApplicationPhotos(appPhotoMap);

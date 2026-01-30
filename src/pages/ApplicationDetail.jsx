@@ -15,6 +15,21 @@ export default function ApplicationDetail() {
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
   const [applicationPhotoUrl, setApplicationPhotoUrl] = useState("");
   const [profileBasics, setProfileBasics] = useState({});
+  const resolveProfilePhoto = (profilePhoto) => {
+    const isPublicUrl =
+      typeof profilePhoto === "string" &&
+      (profilePhoto.startsWith("http://") ||
+        profilePhoto.startsWith("https://") ||
+        profilePhoto.includes("/storage/v1/object/public/"));
+    const imageUrl = isPublicUrl
+      ? profilePhoto
+      : profilePhoto
+        ? supabase.storage
+            .from("barista_profile")
+            .getPublicUrl(profilePhoto).data.publicUrl
+        : "";
+    return imageUrl || "";
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,17 +54,9 @@ export default function ApplicationDetail() {
             birth_date: profileRow.birth_date,
             phone: profileRow.phone,
           });
-          setProfilePhotoUrl(
-            profileRow.profile_photo?.startsWith("http")
-              ? profileRow.profile_photo
-              : ""
-          );
+          setProfilePhotoUrl(resolveProfilePhoto(profileRow.profile_photo));
           if (appRow?.barista_photo) {
-            setApplicationPhotoUrl(
-              appRow.barista_photo?.startsWith("http")
-                ? appRow.barista_photo
-                : ""
-            );
+            setApplicationPhotoUrl(resolveProfilePhoto(appRow.barista_photo));
           }
         }
       }
