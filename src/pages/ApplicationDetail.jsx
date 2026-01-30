@@ -5,6 +5,7 @@ import { Badge } from "../components/ui/badge";
 import { Textarea } from "../components/ui/textarea";
 import { ArrowLeft, MapPin, Phone } from "lucide-react";
 import SplitLayout from "../components/SplitLayout";
+import { resolveProfileImageUrl } from "@/lib/profileImage";
 
 export default function ApplicationDetail() {
   const supabase = getSupabase();
@@ -15,21 +16,6 @@ export default function ApplicationDetail() {
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
   const [applicationPhotoUrl, setApplicationPhotoUrl] = useState("");
   const [profileBasics, setProfileBasics] = useState({});
-  const resolveProfilePhoto = (profilePhoto) => {
-    const isPublicUrl =
-      typeof profilePhoto === "string" &&
-      (profilePhoto.startsWith("http://") ||
-        profilePhoto.startsWith("https://") ||
-        profilePhoto.includes("/storage/v1/object/public/"));
-    const imageUrl = isPublicUrl
-      ? profilePhoto
-      : profilePhoto
-        ? supabase.storage
-            .from("barista_profile")
-            .getPublicUrl(profilePhoto).data.publicUrl
-        : "";
-    return imageUrl || "";
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,9 +40,13 @@ export default function ApplicationDetail() {
             birth_date: profileRow.birth_date,
             phone: profileRow.phone,
           });
-          setProfilePhotoUrl(resolveProfilePhoto(profileRow.profile_photo));
+          setProfilePhotoUrl(
+            resolveProfileImageUrl(supabase, profileRow.profile_photo)
+          );
           if (appRow?.barista_photo) {
-            setApplicationPhotoUrl(resolveProfilePhoto(appRow.barista_photo));
+            setApplicationPhotoUrl(
+              resolveProfileImageUrl(supabase, appRow.barista_photo)
+            );
           }
         }
       }

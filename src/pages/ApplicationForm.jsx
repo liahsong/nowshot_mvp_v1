@@ -7,6 +7,7 @@ import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import { ArrowLeft, Loader2, FileCheck } from "lucide-react";
 import SplitLayout from "../components/SplitLayout";
+import { resolveProfileImageUrl } from "@/lib/profileImage";
 
 export default function ApplicationForm() {
   const supabase = getSupabase();
@@ -66,21 +67,12 @@ export default function ApplicationForm() {
         throw new Error("로그인이 필요합니다.");
       }
 
-      const extractStoragePath = (value) => {
-        if (!value || typeof value !== "string") return null;
-        const match = value.match(
-          /\/storage\/v1\/object\/(?:public|sign)\/[^/]+\/(.+?)(?:\?|$)/
-        );
-        if (match?.[1]) return match[1];
-        return value;
-      };
-
       const { error: insertError } = await supabase.from("applications").insert([
         {
           job_post_id: post.id,
           barista_email: user.email,
           barista_name: profile.name,
-          barista_photo: extractStoragePath(profile.profile_photo),
+          barista_photo: resolveProfileImageUrl(supabase, profile.profile_photo),
           barista_birth_date: profile.birth_date,
           barista_phone: profile.phone,
           barista_address: profile.address,

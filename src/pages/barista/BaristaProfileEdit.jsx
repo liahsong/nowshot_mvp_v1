@@ -22,6 +22,7 @@ import { getSupabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import { resizeImageFile } from "../../utils/resizeImage";
 import { loadKakaoSdk, geocodeAddress } from "../../lib/kakao";
+import { resolveProfileImageUrl } from "@/lib/profileImage";
 
 const SKILLS = [
   "샷 추출",
@@ -49,23 +50,6 @@ const extractStorageRef = (url) => {
   );
   if (!match) return null;
   return { bucket: match[1], path: match[2] };
-};
-
-const extractStoragePath = (url) => {
-  if (!url || typeof url !== "string") return "";
-  const ref = extractStorageRef(url);
-  if (ref?.path) return ref.path;
-  return url;
-};
-
-const normalizeProfilePhotoPath = (value) => {
-  if (!value) return "";
-  if (value.startsWith("http")) return value;
-  const path = extractStoragePath(value);
-  if (path.startsWith("barista_profile/")) {
-    return path.replace(/^barista_profile\//, "");
-  }
-  return path;
 };
 
 const extractFilename = (path) => {
@@ -363,15 +347,11 @@ export default function BaristaProfileEdit() {
         if (active) setProfilePhotoPreviewUrl(formData.profile_photo.previewUrl);
         return;
       }
-      if (formData.profile_photo.startsWith("http")) {
-        if (active) setProfilePhotoPreviewUrl(formData.profile_photo);
-        return;
-      }
-      const path = normalizeProfilePhotoPath(formData.profile_photo);
-      const { data } = supabase.storage
-        .from("barista_profile")
-        .getPublicUrl(path);
-      if (active) setProfilePhotoPreviewUrl(data?.publicUrl || "");
+      const imageUrl = resolveProfileImageUrl(
+        supabase,
+        formData.profile_photo
+      );
+      if (active) setProfilePhotoPreviewUrl(imageUrl || "");
     };
     resolveProfilePhoto();
     return () => {
@@ -404,9 +384,7 @@ export default function BaristaProfileEdit() {
       let profilePhotoUrl = "";
       if (formData.profile_photo) {
         if (typeof formData.profile_photo === "string") {
-          profilePhotoUrl = normalizeProfilePhotoPath(
-            formData.profile_photo
-          );
+          profilePhotoUrl = formData.profile_photo;
         } else if (formData.profile_photo.file) {
           profilePhotoUrl = await uploadFile(
             supabase,

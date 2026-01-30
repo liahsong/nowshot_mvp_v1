@@ -8,13 +8,7 @@ import { Button } from "../../components/ui/button";
 import { MapPin, User as UserIcon, ChevronRight, Star, ArrowLeft } from "lucide-react";
 import { getSupabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
-
-const normalizeProfilePath = (value, userId) => {
-  if (!value || typeof value !== "string") return "";
-  if (value.includes("/")) return value;
-  if (!userId) return value;
-  return `${userId}/profile/${value}`;
-};
+import { resolveProfileImageUrl } from "@/lib/profileImage";
 
 const calculateAge = (birthDate) => {
   if (!birthDate) return "-";
@@ -99,22 +93,10 @@ export default function BaristaManagement() {
       await Promise.all(
         (profiles ?? []).map(async (profile) => {
           nextProfileMap[profile.user_email] = profile;
-          if (!profile?.profile_photo) {
-            nextPhotoMap[profile.user_email] = "";
-            return;
-          }
-          if (profile.profile_photo.startsWith("http")) {
-            nextPhotoMap[profile.user_email] = profile.profile_photo;
-            return;
-          }
-          const normalized = normalizeProfilePath(
-            profile.profile_photo,
-            profile.user_id
+          nextPhotoMap[profile.user_email] = resolveProfileImageUrl(
+            supabase,
+            profile.profile_photo
           );
-          const { data } = supabase.storage
-            .from("barista_profile")
-            .getPublicUrl(normalized);
-          nextPhotoMap[profile.user_email] = data?.publicUrl || "";
         })
       );
 

@@ -167,8 +167,8 @@ export default function JobPostDetail() {
                 <div className="text-xs text-gray-500 mb-1">급여</div>
                 <div className="text-lg font-semibold text-gray-900">
                   {post.work_period_type === "long-term"
-                    ? `${post.monthly_salary?.toLocaleString()}원`
-                    : `${post.hourly_wage?.toLocaleString()}원`}
+                    ? `${post.monthly_salary ? post.monthly_salary.toLocaleString() : "-"}원`
+                    : `${post.hourly_wage ? post.hourly_wage.toLocaleString() : "-"}원`}
                 </div>
               </div>
               <div className="bg-gray-50 rounded-2xl p-4">

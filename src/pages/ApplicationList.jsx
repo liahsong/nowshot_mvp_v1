@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { getSupabase } from "../lib/supabase";
+import { resolveProfileImageUrl } from "@/lib/profileImage";
 
 export default function ApplicationList() {
   const supabase = getSupabase();
@@ -21,21 +22,6 @@ export default function ApplicationList() {
   const [profilePhotos, setProfilePhotos] = useState({});
   const [applicationPhotos, setApplicationPhotos] = useState({});
   const [profileBasics, setProfileBasics] = useState({});
-  const resolveProfilePhoto = (profilePhoto) => {
-    const isPublicUrl =
-      typeof profilePhoto === "string" &&
-      (profilePhoto.startsWith("http://") ||
-        profilePhoto.startsWith("https://") ||
-        profilePhoto.includes("/storage/v1/object/public/"));
-    const imageUrl = isPublicUrl
-      ? profilePhoto
-      : profilePhoto
-        ? supabase.storage
-            .from("barista_profile")
-            .getPublicUrl(profilePhoto).data.publicUrl
-        : "";
-    return imageUrl || "";
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -73,7 +59,8 @@ export default function ApplicationList() {
                     birth_date: profile.birth_date,
                     phone: profile.phone,
                   };
-                  photoMap[profile.user_email] = resolveProfilePhoto(
+                  photoMap[profile.user_email] = resolveProfileImageUrl(
+                    supabase,
                     profile.profile_photo
                   );
                 })
@@ -86,7 +73,10 @@ export default function ApplicationList() {
             await Promise.all(
               nextApps.map(async (app) => {
                 if (!app.barista_photo || !app.id) return;
-                appPhotoMap[app.id] = resolveProfilePhoto(app.barista_photo);
+                appPhotoMap[app.id] = resolveProfileImageUrl(
+                  supabase,
+                  app.barista_photo
+                );
               })
             );
             setApplicationPhotos(appPhotoMap);
@@ -121,7 +111,8 @@ export default function ApplicationList() {
                 birth_date: profile.birth_date,
                 phone: profile.phone,
               };
-              photoMap[profile.user_email] = resolveProfilePhoto(
+              photoMap[profile.user_email] = resolveProfileImageUrl(
+                supabase,
                 profile.profile_photo
               );
             })
@@ -134,7 +125,10 @@ export default function ApplicationList() {
         await Promise.all(
           nextApps.map(async (app) => {
             if (!app.barista_photo || !app.id) return;
-            appPhotoMap[app.id] = resolveProfilePhoto(app.barista_photo);
+            appPhotoMap[app.id] = resolveProfileImageUrl(
+              supabase,
+              app.barista_photo
+            );
           })
         );
         setApplicationPhotos(appPhotoMap);

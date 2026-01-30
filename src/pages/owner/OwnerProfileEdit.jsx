@@ -10,6 +10,7 @@ import { Label } from "../../components/ui/label";
 import { getSupabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import AddressSearchModal from "../../components/AddressSearchModal";
+import { loadKakaoSdk, geocodeAddress } from "../../lib/kakao";
 
 export default function OwnerProfileEdit() {
   const supabase = getSupabase();
@@ -54,6 +55,18 @@ export default function OwnerProfileEdit() {
   const updateMutation = useMutation({
     mutationFn: async () => {
       if (!user) return;
+      let latValue = formData.lat;
+      let lngValue = formData.lng;
+      if (formData.address && (latValue == null || lngValue == null)) {
+        try {
+          await loadKakaoSdk();
+          const geo = await geocodeAddress(formData.address);
+          latValue = geo?.lat ?? latValue;
+          lngValue = geo?.lng ?? lngValue;
+        } catch (error) {
+          console.warn("Owner geocode failed:", error);
+        }
+      }
       if (profile?.id) {
         const { error } = await supabase
           .from("owner_profiles")
@@ -61,8 +74,8 @@ export default function OwnerProfileEdit() {
             owner_name: formData.owner_name,
             phone: formData.phone,
             address: formData.address,
-            lat: formData.lat,
-            lng: formData.lng,
+            lat: latValue,
+            lng: lngValue,
           })
           .eq("id", profile.id);
         if (error) throw error;
@@ -75,8 +88,8 @@ export default function OwnerProfileEdit() {
         owner_name: formData.owner_name,
         phone: formData.phone,
         address: formData.address,
-        lat: formData.lat,
-        lng: formData.lng,
+        lat: latValue,
+        lng: lngValue,
         profile_completed: true,
       });
       if (error) throw error;

@@ -5,6 +5,7 @@ import { Badge } from "../components/ui/badge";
 import { Textarea } from "../components/ui/textarea";
 import { ArrowLeft, MapPin } from "lucide-react";
 import SplitLayout from "../components/SplitLayout";
+import { resolveProfileImageUrl } from "@/lib/profileImage";
 
 export default function BaristaApplicationDetail() {
   const supabase = getSupabase();
@@ -32,14 +33,9 @@ export default function BaristaApplicationDetail() {
 
       if (appRow?.barista_photo) {
         const rawPath = String(appRow.barista_photo);
-        if (rawPath.startsWith("http")) {
-          setProfilePhotoUrl(rawPath);
-        } else {
-          const { data } = supabase.storage
-            .from("barista_profile")
-            .getPublicUrl(rawPath);
-          setProfilePhotoUrl(data?.publicUrl || "");
-        }
+        setProfilePhotoUrl(
+          resolveProfileImageUrl(supabase, rawPath) || ""
+        );
       }
 
       setLoading(false);

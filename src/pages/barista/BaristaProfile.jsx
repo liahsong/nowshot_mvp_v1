@@ -10,6 +10,7 @@ import { Label } from "../../components/ui/label";
 import SkillBadge from "../../components/ui/SkillBadge";
 import { getSupabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
+import { resolveProfileImageUrl } from "@/lib/profileImage";
 
 const SKILLS = [
   "샷 추출",
@@ -101,13 +102,6 @@ const normalizeLatteArtPaths = (value) => {
       return filename ? `barista-skill/latte-art/${filename}` : null;
     })
     .filter(Boolean);
-};
-
-const normalizeProfilePath = (value, userId) => {
-  if (!value) return "";
-  if (value.includes("/")) return value;
-  if (!userId) return value;
-  return `${userId}/profile/${value}`;
 };
 
 const blobToDataUrl = (blob) =>
@@ -275,15 +269,8 @@ export default function BaristaProfile() {
         if (active) setProfilePhotoUrl("");
         return;
       }
-      if (profile.profile_photo.startsWith("http")) {
-        if (active) setProfilePhotoUrl(profile.profile_photo);
-        return;
-      }
-      const path = normalizeProfilePath(profile.profile_photo, user?.id);
-      const { data } = supabase.storage
-        .from("barista_profile")
-        .getPublicUrl(path);
-      if (active) setProfilePhotoUrl(data?.publicUrl || "");
+      const imageUrl = resolveProfileImageUrl(supabase, profile.profile_photo);
+      if (active) setProfilePhotoUrl(imageUrl || "");
     };
     resolveProfilePhoto();
     return () => {

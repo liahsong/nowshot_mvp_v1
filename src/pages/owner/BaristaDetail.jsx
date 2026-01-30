@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../componen
 import { getSupabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "../../components/ui/use-toast";
+import { resolveProfileImageUrl } from "@/lib/profileImage";
 
 const REVIEW_TAGS = [
   "친절해요",
@@ -22,13 +23,6 @@ const REVIEW_TAGS = [
   "밝아요",
   "재고용의사",
 ];
-
-const normalizeProfilePath = (value, userId) => {
-  if (!value || typeof value !== "string") return "";
-  if (value.includes("/")) return value;
-  if (!userId) return value;
-  return `${userId}/profile/${value}`;
-};
 
 const calculateAge = (birthDate) => {
   if (!birthDate) return "-";
@@ -98,31 +92,17 @@ export default function BaristaDetail() {
           .eq("user_email", appRow.barista_email)
           .maybeSingle();
         if (profileRow?.profile_photo) {
-          if (profileRow.profile_photo.startsWith("http")) {
-            setProfilePhotoUrl(profileRow.profile_photo);
-          } else {
-            const normalized = normalizeProfilePath(
-              profileRow.profile_photo,
-              profileRow.user_id
-            );
-            const { data } = supabase.storage
-              .from("barista_profile")
-              .getPublicUrl(normalized);
-            if (data?.publicUrl) setProfilePhotoUrl(data.publicUrl);
-          }
+          const imageUrl = resolveProfileImageUrl(
+            supabase,
+            profileRow.profile_photo
+          );
+          if (imageUrl) setProfilePhotoUrl(imageUrl);
         } else if (appRow?.barista_photo) {
-          if (appRow.barista_photo.startsWith("http")) {
-            setProfilePhotoUrl(appRow.barista_photo);
-          } else {
-            const normalized = normalizeProfilePath(
-              appRow.barista_photo,
-              profileRow?.user_id
-            );
-            const { data } = supabase.storage
-              .from("barista_profile")
-              .getPublicUrl(normalized);
-            if (data?.publicUrl) setProfilePhotoUrl(data.publicUrl);
-          }
+          const imageUrl = resolveProfileImageUrl(
+            supabase,
+            appRow.barista_photo
+          );
+          if (imageUrl) setProfilePhotoUrl(imageUrl);
         }
       }
     };

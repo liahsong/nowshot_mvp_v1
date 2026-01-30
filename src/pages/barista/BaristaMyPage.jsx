@@ -18,6 +18,7 @@ import {
 import { motion } from "framer-motion";
 import { getSupabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
+import { resolveProfileImageUrl } from "@/lib/profileImage";
 
 export default function BaristaMyPage() {
   const supabase = getSupabase();
@@ -77,13 +78,8 @@ export default function BaristaMyPage() {
       setProfilePhotoUrl("");
       return;
     }
-
-    if (profile.profile_photo.startsWith("http")) {
-      setProfilePhotoUrl(profile.profile_photo);
-      return;
-    }
-
-    setProfilePhotoUrl("");
+    const imageUrl = resolveProfileImageUrl(supabase, profile.profile_photo);
+    setProfilePhotoUrl(imageUrl || "");
   }, [profile?.profile_photo]);
 
   const handleLogout = async () => {

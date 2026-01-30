@@ -20,6 +20,7 @@ import { motion } from "framer-motion";
 import DateFilter from "./filters/DateFilter";
 import DetailedFilters from "./filters/DetailedFilters";
 import AddressSearchModal from "../components/AddressSearchModal";
+import { resolveProfileImageUrl } from "@/lib/profileImage";
 
 const toRad = (value) => (value * Math.PI) / 180;
 const getDistanceKm = (lat1, lng1, lat2, lng2) => {
@@ -188,20 +189,8 @@ export default function BaristaHome() {
       return;
     }
 
-    const isPublicUrl =
-      typeof profile.profile_photo === "string" &&
-      (profile.profile_photo.startsWith("http://") ||
-        profile.profile_photo.startsWith("https://") ||
-        profile.profile_photo.includes("/storage/v1/object/public/"));
-    if (isPublicUrl) {
-      setProfilePhotoUrl(profile.profile_photo);
-      return;
-    }
-
-    const { data } = supabase.storage
-      .from("barista_profile")
-      .getPublicUrl(profile.profile_photo);
-    setProfilePhotoUrl(data?.publicUrl || null);
+    const imageUrl = resolveProfileImageUrl(supabase, profile.profile_photo);
+    setProfilePhotoUrl(imageUrl || null);
   }, [profile?.profile_photo]);
 
   const appliedPostIds = useMemo(
