@@ -20,7 +20,6 @@ import { motion } from "framer-motion";
 import DateFilter from "./filters/DateFilter";
 import DetailedFilters from "./filters/DetailedFilters";
 import AddressSearchModal from "../components/AddressSearchModal";
-import { resolveProfileImageUrl } from "@/lib/profileImage";
 
 const toRad = (value) => (value * Math.PI) / 180;
 const getDistanceKm = (lat1, lng1, lat2, lng2) => {
@@ -65,6 +64,17 @@ export default function BaristaHome() {
 // { lat: number, lng: number }
 
   const [averageRating, setAverageRating] = useState(0);
+  const resolveImageUrl = (value) => {
+    if (!value || typeof value !== "string") return "";
+    const isPublicUrl =
+      value.startsWith("http://") ||
+      value.startsWith("https://") ||
+      value.includes("/storage/v1/object/public/");
+    if (isPublicUrl) return value;
+    return supabase.storage
+      .from("barista_profile")
+      .getPublicUrl(value).data.publicUrl;
+  };
   const jobPostsById = useMemo(() => {
     const map = {};
     jobPosts.forEach((post) => {
@@ -189,7 +199,7 @@ export default function BaristaHome() {
       return;
     }
 
-    const imageUrl = resolveProfileImageUrl(supabase, profile.profile_photo);
+    const imageUrl = resolveImageUrl(profile.profile_photo);
     setProfilePhotoUrl(imageUrl || null);
   }, [profile?.profile_photo]);
 
@@ -442,7 +452,7 @@ export default function BaristaHome() {
                 <DateFilter
                   selectedDate={selectedDate}
                   onDateSelect={setSelectedDate}
-                  jobPosts={mergedPosts}
+                  jobPosts={jobPosts}
                 />
               </div>
 
@@ -476,10 +486,10 @@ export default function BaristaHome() {
 
             <div>
               <h2 className="font-semibold text-gray-900 mb-3">
-                공고 {filteredPosts.length}건
+                공고 {rpcPosts.length}건
               </h2>
 
-              {filteredPosts.length === 0 ? ( // ✅ 수정됨
+              {rpcPosts.length === 0 ? ( // ✅ 수정됨
                 <div className="bg-white rounded-2xl p-8 text-center">
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                     <Briefcase className="w-8 h-8 text-gray-400" />
@@ -488,7 +498,7 @@ export default function BaristaHome() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {filteredPosts.map((post, index) => {
+                  {rpcPosts.map((post, index) => {
                     const displayPost = jobPostsById[post.id] || post;
                     return (
                     <motion.div

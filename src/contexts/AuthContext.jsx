@@ -26,7 +26,10 @@ export function AuthProvider({ children }) {
       .maybeSingle();
 
     if (error) {
-      console.warn("Profile fetch error:", error);
+      console.warn("[AuthContext] Profile fetch error:", error);
+    }
+    if (!data) {
+      console.warn("[AuthContext] ⚠️ profile null — userId:", userId);
     }
 
     const normalizedRole = data?.role ?? "pending";
@@ -47,7 +50,10 @@ export function AuthProvider({ children }) {
         .select("onboarding_completed, profile_completed")
         .eq("user_id", userId)
         .maybeSingle();
-      if (!ownerProfile) return null;
+      if (!ownerProfile) {
+        console.warn("[AuthContext] ⚠️ owner_profile null — userId:", userId);
+        return null;
+      }
       return ownerProfile;
     };
 
@@ -57,7 +63,10 @@ export function AuthProvider({ children }) {
         .select("profile_completed")
         .eq("user_id", userId)
         .maybeSingle();
-      if (!baristaProfile) return null;
+      if (!baristaProfile) {
+        console.warn("[AuthContext] ⚠️ barista_profile null — userId:", userId);
+        return null;
+      }
       return baristaProfile;
     };
 

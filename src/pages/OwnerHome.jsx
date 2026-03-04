@@ -281,7 +281,7 @@ export default function OwnerHome() {
                               <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
                                 <MapPin className="w-3.5 h-3.5" />
                                 <span className="truncate max-w-[180px]">
-                                  {post.cafe_address}
+                                  {post.cafe_address ?? "주소 미정"}
                                 </span>
                               </div>
                             </div>
@@ -296,7 +296,9 @@ export default function OwnerHome() {
                                 {formatWorkDate(post)}
                               </span>
                               <span>
-                                {post.start_time} - {post.end_time}
+                                {post.start_time && post.end_time
+                                  ? `${post.start_time} - ${post.end_time}`
+                                  : "시간 미정"}
                               </span>
                               <span className="text-sm text-gray-500">
                                 지원 {applicationCounts.get(post.id) || 0}명

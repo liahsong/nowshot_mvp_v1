@@ -145,8 +145,12 @@ export default function BaristaApplications() {
                       <div className="text-right">
                         <p className="font-bold text-[#1FBECC]">
                           {post?.work_period_type === "long-term"
-                            ? `${post?.monthly_salary?.toLocaleString()}원`
-                            : `${post?.hourly_wage?.toLocaleString()}원`}
+                            ? post?.monthly_salary
+                              ? `${post.monthly_salary.toLocaleString()}원`
+                              : "협의"
+                            : post?.hourly_wage
+                            ? `${post.hourly_wage.toLocaleString()}원`
+                            : "협의"}
                         </p>
                         <p className="text-xs text-gray-500">
                           {post?.work_period_type === "long-term"

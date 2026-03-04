@@ -158,7 +158,9 @@ export default function FullTimeJobs() {
                           </div>
                           <div className="text-right">
                             <p className="font-bold text-[#1FBECC]">
-                              {post.monthly_salary?.toLocaleString()}원
+                              {post.monthly_salary
+                                ? `${post.monthly_salary.toLocaleString()}원`
+                                : "협의"}
                             </p>
                             <p className="text-xs text-gray-500">월급</p>
                           </div>

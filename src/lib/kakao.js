@@ -14,13 +14,18 @@ export const loadKakaoSdk = () =>
 
     const existing = document.getElementById(sdkId);
     if (existing) {
+      if (window.kakao?.maps?.load) {
+        window.kakao.maps.load(() => resolve());
+        return;
+      }
       existing.addEventListener("load", () => {
         if (!window.kakao?.maps?.load) {
-        reject(new Error("Existing Kakao SDK invalid"));
+          reject(new Error("Existing Kakao SDK invalid"));
+          return;
+        }
+        window.kakao.maps.load(() => resolve());
+      });
       return;
-    }
-    window.kakao.maps.load(() => resolve());
-  });
     }
 
     const key = import.meta.env.VITE_KAKAO_JS_KEY;
@@ -34,8 +39,8 @@ export const loadKakaoSdk = () =>
     script.async = true;
     script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&libraries=services&autoload=false`;
     script.onload = () => {
-      if (window.kakao?.maps?.load) {
-        reject(new Error("Kako SDK loaded but maps is unavaulable"));
+      if (!window.kakao?.maps?.load) {
+        reject(new Error("Kakao SDK loaded but maps is unavailable"));
         return;
       }
       window.kakao.maps.load(() => resolve());

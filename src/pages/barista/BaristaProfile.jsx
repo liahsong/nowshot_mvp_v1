@@ -9,6 +9,7 @@ import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
 import SkillBadge from "../../components/ui/SkillBadge";
 import { getSupabase } from "../../lib/supabase";
+import { getSignedUrl } from "../../lib/storage";
 import { useAuth } from "../../contexts/AuthContext";
 import { resolveProfileImageUrl } from "@/lib/profileImage";
 
@@ -49,21 +50,6 @@ const normalizeArrayField = (value) => {
   return [];
 };
 
-const extractStorageRef = (url) => {
-  if (!url || typeof url !== "string") return null;
-  const match = url.match(
-    /\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+?)(?:\?|$)/
-  );
-  if (!match) return null;
-  return { bucket: match[1], path: match[2] };
-};
-
-const extractFilename = (path) => {
-  if (!path) return "";
-  const parts = path.split("/");
-  return parts[parts.length - 1] || "";
-};
-
 const extractLatteArtList = (value) => {
   if (!value) return [];
   if (Array.isArray(value)) {
@@ -89,6 +75,12 @@ const extractLatteArtList = (value) => {
   return [];
 };
 
+const extractFilename = (path) => {
+  if (!path) return "";
+  const parts = path.split("/");
+  return parts[parts.length - 1] || "";
+};
+
 const normalizeLatteArtPaths = (value) => {
   const items = extractLatteArtList(value);
   return items
@@ -104,117 +96,24 @@ const normalizeLatteArtPaths = (value) => {
     .filter(Boolean);
 };
 
-const blobToDataUrl = (blob) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("Blob read failed"));
-    reader.readAsDataURL(blob);
-  });
-
-const buildSignedUrl = async (
-  url,
-  defaultBucket,
-  fallbackPaths = [],
-  preferPublic = false
-) => {
-  const supabase = getSupabase();
-  if (!url || typeof url !== "string") return url;
-  const ref = extractStorageRef(url);
-  if (!ref) {
-    if (defaultBucket && !url.startsWith("http")) {
-      const candidates = [
-        url.replace(/^\/+/, ""),
-        ...fallbackPaths.map((path) => `${path.replace(/\/+$/, "")}/${url}`),
-      ];
-      for (const candidate of candidates) {
-        const { data, error } = await supabase.storage
-          .from(defaultBucket)
-          .createSignedUrl(candidate, 60 * 60);
-        if (!error && data?.signedUrl) return data.signedUrl;
-        if (preferPublic) {
-          const publicUrl = supabase.storage
-            .from(defaultBucket)
-            .getPublicUrl(candidate)?.data?.publicUrl;
-          if (publicUrl) return publicUrl;
-        }
-        const { data: fileData, error: downloadError } = await supabase.storage
-          .from(defaultBucket)
-          .download(candidate);
-        if (!downloadError && fileData) {
-          try {
-            return await blobToDataUrl(fileData);
-          } catch {
-            return url;
-          }
-        }
-      }
+const resolveMediaUrl = async (bucket, value, fallbackPrefix = "") => {
+  if (!value || typeof value !== "string") return "";
+  const isHttp = value.startsWith("http://") || value.startsWith("https://");
+  if (isHttp) {
+    const match = value.match(
+      new RegExp(`/storage/v1/object/(public|sign)/${bucket}/(.+?)(?:\\?|$)`)
+    );
+    if (match?.[2]) {
+      return getSignedUrl({ bucket, path: match[2], expiresIn: 3600 });
     }
-    return url;
+    return value;
   }
-  const { data, error } = await supabase.storage
-    .from(ref.bucket)
-    .createSignedUrl(ref.path, 60 * 60);
-  if (!error && data?.signedUrl) return data.signedUrl;
-  if (fallbackPaths.length > 0) {
-    const filename = extractFilename(ref.path);
-    for (const pathPrefix of fallbackPaths) {
-      if (!filename) continue;
-      const candidate = `${pathPrefix.replace(/\/+$/, "")}/${filename}`;
-      const { data: fallbackData, error: fallbackError } =
-        await supabase.storage
-          .from(ref.bucket)
-          .createSignedUrl(candidate, 60 * 60);
-      if (!fallbackError && fallbackData?.signedUrl) {
-        return fallbackData.signedUrl;
-      }
-    }
-  }
-  if (preferPublic) {
-    const publicUrl = supabase.storage
-      .from(ref.bucket)
-      .getPublicUrl(ref.path)?.data?.publicUrl;
-    if (publicUrl) return publicUrl;
-  }
-  if (fallbackPaths.length > 0) {
-    const filename = extractFilename(ref.path);
-    for (const pathPrefix of fallbackPaths) {
-      if (!filename) continue;
-      const candidate = `${pathPrefix.replace(/\/+$/, "")}/${filename}`;
-      const publicUrl = supabase.storage
-        .from(ref.bucket)
-        .getPublicUrl(candidate)?.data?.publicUrl;
-      if (publicUrl) return publicUrl;
-    }
-  }
-  const { data: fileData, error: downloadError } = await supabase.storage
-    .from(ref.bucket)
-    .download(ref.path);
-  if (!downloadError && fileData) {
-    try {
-      return await blobToDataUrl(fileData);
-    } catch {
-      return url;
-    }
-  }
-  if (fallbackPaths.length > 0) {
-    const filename = extractFilename(ref.path);
-    for (const pathPrefix of fallbackPaths) {
-      if (!filename) continue;
-      const candidate = `${pathPrefix.replace(/\/+$/, "")}/${filename}`;
-      const { data: fallbackFile, error: fallbackDownloadError } =
-        await supabase.storage.from(ref.bucket).download(candidate);
-      if (!fallbackDownloadError && fallbackFile) {
-        try {
-          return await blobToDataUrl(fallbackFile);
-        } catch {
-          return url;
-        }
-      }
-    }
-  }
-  if (error || !data?.signedUrl) return url;
-  return data.signedUrl;
+  const normalized = value.includes("/")
+    ? value
+    : fallbackPrefix
+    ? `${fallbackPrefix}/${value}`
+    : value;
+  return getSignedUrl({ bucket, path: normalized, expiresIn: 3600 });
 };
 const parseCareerSummary = (value) => {
   if (Array.isArray(value)) return value.filter(Boolean);
@@ -237,9 +136,10 @@ export default function BaristaProfile() {
         .from("barista_profiles")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
       if (error) throw error;
-      return data;
+      if (!data) console.warn("[BaristaProfile] ⚠️ profile null — userId:", user.id);
+      return data ?? null;
     },
     enabled: !!user?.id,
   });
@@ -304,12 +204,12 @@ export default function BaristaProfile() {
     const resolveUrls = async () => {
       const latteResolved = await Promise.all(
         latteArtPhotos.map((url) =>
-          buildSignedUrl(url, "barista_latteart", ["barista-skill/latte-art"])
+          resolveMediaUrl("barista_latteart", url, "barista-skill/latte-art")
         )
       );
       const careerResolved = await Promise.all(
         careerDocuments.map((url) =>
-          buildSignedUrl(url, "barista_carrer", [`${user?.id}/career`])
+          resolveMediaUrl("barista_carrer", url, `${user?.id}/career`)
         )
       );
       if (active) {
@@ -352,6 +252,14 @@ export default function BaristaProfile() {
           {isLoading ? (
             <div className="min-h-[60vh] flex items-center justify-center">
               <p className="text-sm text-gray-500">불러오는 중...</p>
+            </div>
+          ) : !profile ? (
+            <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+              <UserIcon className="w-12 h-12 text-gray-300" />
+              <p className="text-sm text-gray-500">프로필 정보가 없습니다.</p>
+              <Button onClick={() => navigate("/barista/profile/edit")} className="bg-[#1FBECC] text-white">
+                프로필 등록하기
+              </Button>
             </div>
           ) : (
             <motion.div

@@ -279,6 +279,7 @@ export default function JobManage() {
                 src={cafeImage}
                 alt=""
                 className="w-full h-full object-cover"
+                onError={(e) => { e.currentTarget.style.display = "none"; }}
               />
             </div>
           )}

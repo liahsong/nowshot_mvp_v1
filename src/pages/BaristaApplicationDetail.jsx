@@ -33,9 +33,18 @@ export default function BaristaApplicationDetail() {
 
       if (appRow?.barista_photo) {
         const rawPath = String(appRow.barista_photo);
-        setProfilePhotoUrl(
-          resolveProfileImageUrl(supabase, rawPath) || ""
-        );
+        setProfilePhotoUrl(resolveProfileImageUrl(supabase, rawPath) || "");
+      } else if (appRow?.barista_email) {
+        const { data: profileRow } = await supabase
+          .from("barista_profiles")
+          .select("profile_photo")
+          .eq("user_email", appRow.barista_email)
+          .maybeSingle();
+        if (profileRow?.profile_photo) {
+          setProfilePhotoUrl(
+            resolveProfileImageUrl(supabase, profileRow.profile_photo) || ""
+          );
+        }
       }
 
       setLoading(false);

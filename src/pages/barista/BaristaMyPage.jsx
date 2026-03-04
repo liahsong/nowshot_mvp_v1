@@ -33,9 +33,10 @@ export default function BaristaMyPage() {
         .from("barista_profiles")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
       if (error) throw error;
-      return data;
+      if (!data) console.warn("[BaristaMyPage] ⚠️ profile null — userId:", user.id);
+      return data ?? null;
     },
     enabled: !!user?.id,
   });

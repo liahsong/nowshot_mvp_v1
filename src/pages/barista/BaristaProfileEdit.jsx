@@ -23,6 +23,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { resizeImageFile } from "../../utils/resizeImage";
 import { loadKakaoSdk, geocodeAddress } from "../../lib/kakao";
 import { resolveProfileImageUrl } from "@/lib/profileImage";
+import { getSignedUrl } from "../../lib/storage";
 
 const SKILLS = [
   "샷 추출",
@@ -43,132 +44,24 @@ const BUCKETS = {
 };
 const PUBLIC_BUCKETS = new Set([BUCKETS.profile]);
 
-const extractStorageRef = (url) => {
-  if (!url || typeof url !== "string") return null;
-  const match = url.match(
-    /\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+?)(?:\?|$)/
-  );
-  if (!match) return null;
-  return { bucket: match[1], path: match[2] };
-};
-
-const extractFilename = (path) => {
-  if (!path) return "";
-  const parts = path.split("/");
-  return parts[parts.length - 1] || "";
-};
-
-const blobToDataUrl = (blob) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("Blob read failed"));
-    reader.readAsDataURL(blob);
-  });
-
-const resolveSignedUrl = async (
-  url,
-  defaultBucket,
-  fallbackPaths = [],
-  preferPublic = false
-) => {
-  const supabase = getSupabase();
-  if (!url || typeof url !== "string") return url;
-  const ref = extractStorageRef(url);
-  if (!ref) {
-    if (defaultBucket && !url.startsWith("http")) {
-      const candidates = [
-        url.replace(/^\/+/, ""),
-        ...fallbackPaths.map((path) => `${path.replace(/\/+$/, "")}/${url}`),
-      ];
-      for (const candidate of candidates) {
-        const { data, error } = await supabase.storage
-          .from(defaultBucket)
-          .createSignedUrl(candidate, 60 * 60);
-        if (!error && data?.signedUrl) return data.signedUrl;
-        if (preferPublic) {
-          const publicUrl = supabase.storage
-            .from(defaultBucket)
-            .getPublicUrl(candidate)?.data?.publicUrl;
-          if (publicUrl) return publicUrl;
-        }
-        const { data: fileData, error: downloadError } = await supabase.storage
-          .from(defaultBucket)
-          .download(candidate);
-        if (!downloadError && fileData) {
-          try {
-            return await blobToDataUrl(fileData);
-          } catch {
-            return url;
-          }
-        }
-      }
+const resolveMediaUrl = async (bucket, value, fallbackPrefix = "") => {
+  if (!value || typeof value !== "string") return "";
+  const isHttp = value.startsWith("http://") || value.startsWith("https://");
+  if (isHttp) {
+    const match = value.match(
+      new RegExp(`/storage/v1/object/(public|sign)/${bucket}/(.+?)(?:\\?|$)`)
+    );
+    if (match?.[2]) {
+      return getSignedUrl({ bucket, path: match[2], expiresIn: 3600 });
     }
-    return url;
+    return value;
   }
-  const { data, error } = await supabase.storage
-    .from(ref.bucket)
-    .createSignedUrl(ref.path, 60 * 60);
-  if (!error && data?.signedUrl) return data.signedUrl;
-  if (fallbackPaths.length > 0) {
-    const filename = extractFilename(ref.path);
-    for (const pathPrefix of fallbackPaths) {
-      if (!filename) continue;
-      const candidate = `${pathPrefix.replace(/\/+$/, "")}/${filename}`;
-      const { data: fallbackData, error: fallbackError } =
-        await supabase.storage
-          .from(ref.bucket)
-          .createSignedUrl(candidate, 60 * 60);
-      if (!fallbackError && fallbackData?.signedUrl) {
-        return fallbackData.signedUrl;
-      }
-    }
-  }
-  if (preferPublic) {
-    const publicUrl = supabase.storage
-      .from(ref.bucket)
-      .getPublicUrl(ref.path)?.data?.publicUrl;
-    if (publicUrl) return publicUrl;
-  }
-  if (fallbackPaths.length > 0) {
-    const filename = extractFilename(ref.path);
-    for (const pathPrefix of fallbackPaths) {
-      if (!filename) continue;
-      const candidate = `${pathPrefix.replace(/\/+$/, "")}/${filename}`;
-      const publicUrl = supabase.storage
-        .from(ref.bucket)
-        .getPublicUrl(candidate)?.data?.publicUrl;
-      if (publicUrl) return publicUrl;
-    }
-  }
-  const { data: fileData, error: downloadError } = await supabase.storage
-    .from(ref.bucket)
-    .download(ref.path);
-  if (!downloadError && fileData) {
-    try {
-      return await blobToDataUrl(fileData);
-    } catch {
-      return url;
-    }
-  }
-  if (fallbackPaths.length > 0) {
-    const filename = extractFilename(ref.path);
-    for (const pathPrefix of fallbackPaths) {
-      if (!filename) continue;
-      const candidate = `${pathPrefix.replace(/\/+$/, "")}/${filename}`;
-      const { data: fallbackFile, error: fallbackDownloadError } =
-        await supabase.storage.from(ref.bucket).download(candidate);
-      if (!fallbackDownloadError && fallbackFile) {
-        try {
-          return await blobToDataUrl(fallbackFile);
-        } catch {
-          return url;
-        }
-      }
-    }
-  }
-  if (error || !data?.signedUrl) return url;
-  return data.signedUrl;
+  const normalized = value.includes("/")
+    ? value
+    : fallbackPrefix
+    ? `${fallbackPrefix}/${value}`
+    : value;
+  return getSignedUrl({ bucket, path: normalized, expiresIn: 3600 });
 };
 
 const normalizePhotoItems = (value) => {
@@ -313,9 +206,11 @@ export default function BaristaProfileEdit() {
       const resolved = await Promise.all(
         latteArtItems.map(async (item) => ({
           ...item,
-          previewUrl: await resolveSignedUrl(item.url, "barista_latteart", [
-            "barista-skill/latte-art",
-          ]),
+          previewUrl: await resolveMediaUrl(
+            "barista_latteart",
+            item.url,
+            "barista-skill/latte-art"
+          ),
         }))
       );
       setFormData({

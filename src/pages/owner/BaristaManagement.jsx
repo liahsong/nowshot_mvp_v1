@@ -119,6 +119,20 @@ export default function BaristaManagement() {
     return map;
   }, [reviews]);
 
+  useEffect(() => {
+    window.debugProfile = {
+      profileMap,
+      photoMap,
+      hiredApplications,
+    };
+
+    console.log("🔥 debugProfile 등록됨", {
+      profileMap,
+      photoMap,
+      hiredApplications,
+    });
+  }, [profileMap, photoMap, hiredApplications]);
+
   return (
     <SplitLayout
       leftContent={
