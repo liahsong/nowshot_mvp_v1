@@ -8,19 +8,6 @@ import { Toaster } from "./components/ui/toaster";
 import App from "./App";
 import "./index.css";
 
-if (import.meta.env.DEV) {
-  import("./debug/supabaseLogger").then(
-    ({ debugSignUrl, debugEdgeFunction }) => {
-      debugSignUrl(
-        "cafe_photos",
-        "cafe_photos/cafe/1768812174584_20150624174352_5642021286.jpg"
-      );
-     
-
-      // debugEdgeFunction("sign-storage", { test: true });
-    }
-  );
-}
 
 const queryClient = new QueryClient();
 

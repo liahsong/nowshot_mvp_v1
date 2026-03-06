@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ChevronRight, LogOut, Store, User } from "lucide-react";
+import { ArrowLeft, ChevronRight, Lightbulb, LogOut, Store, User } from "lucide-react";
 import { motion } from "framer-motion";
 import SplitLayout from "../../components/SplitLayout";
 import { Button } from "../../components/ui/button";
@@ -88,6 +88,7 @@ export default function OwnerMyPage() {
       count: jobPosts.length,
     },
     { icon: User, label: "프로필 수정", path: "/owner/profile/edit" },
+    { icon: Lightbulb, label: "기능 요청", path: "/policy/feature-request" },
   ];
 
   return (

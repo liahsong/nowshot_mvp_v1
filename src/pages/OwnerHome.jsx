@@ -40,6 +40,16 @@ const formatWorkDate = (post) => {
   return "일정 미정";
 };
 
+const isPastPost = (post) => {
+  const baseDate = post.work_end_date || post.work_start_date;
+  if (!baseDate) return false;
+  const end = new Date(baseDate);
+  end.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return end < today;
+};
+
 const normalizeCafePhotos = (photos) => {
   if (!photos) return [];
   if (Array.isArray(photos)) {
@@ -117,7 +127,24 @@ export default function OwnerHome() {
         .eq("owner_email", user.email)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      const list = data ?? [];
+      const expired = list.filter(
+        (post) => post.status === "open" && isPastPost(post)
+      );
+      if (expired.length > 0) {
+        await supabase
+          .from("job_posts")
+          .update({ status: "closed" })
+          .in(
+            "id",
+            expired.map((post) => post.id)
+          );
+      }
+      return list.map((post) =>
+        post.status === "open" && isPastPost(post)
+          ? { ...post, status: "closed" }
+          : post
+      );
     },
     enabled: !!user?.email,
   });
@@ -152,16 +179,19 @@ export default function OwnerHome() {
   const sortedJobPosts = useMemo(() => {
     const list = [...jobPosts];
     return list.sort((a, b) => {
-      const aClosed = a.status === "closed" || a.status === "completed";
-      const bClosed = b.status === "closed" || b.status === "completed";
-      if (aClosed === bClosed) {
-        return new Date(b.created_at) - new Date(a.created_at);
-      }
-      return aClosed ? 1 : -1;
+      const aTime = a.work_start_date
+        ? new Date(a.work_start_date).getTime()
+        : 0;
+      const bTime = b.work_start_date
+        ? new Date(b.work_start_date).getTime()
+        : 0;
+      return bTime - aTime;
     });
   }, [jobPosts]);
   const openPostsCount = useMemo(
-    () => jobPosts.filter((post) => post.status === "open").length,
+    () =>
+      jobPosts.filter((post) => post.status === "open" && !isPastPost(post))
+        .length,
     [jobPosts]
   );
 
@@ -264,52 +294,63 @@ export default function OwnerHome() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {sortedJobPosts.slice(0, 3).map((post, index) => (
-                    <motion.div
-                      key={post.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                    >
-                      <Link to={`/owner/jobs/${post.id}`}>
-                        <div className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                          <div className="flex items-start justify-between mb-3">
-                            <div>
-                              <h3 className="font-semibold text-gray-900">
-                                {post.cafe_name}
-                              </h3>
-                              <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
-                                <MapPin className="w-3.5 h-3.5" />
-                                <span className="truncate max-w-[180px]">
-                                  {post.cafe_address ?? "주소 미정"}
+                  {sortedJobPosts.slice(0, 3).map((post, index) => {
+                    const isPast = isPastPost(post);
+                    return (
+                      <motion.div
+                        key={post.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <Link to={`/owner/jobs/${post.id}`}>
+                          <div
+                            className={`bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow ${
+                              isPast ? "opacity-60 grayscale" : ""
+                            }`}
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <div>
+                                <h3 className="font-semibold text-gray-900">
+                                  {post.cafe_name}
+                                </h3>
+                                <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+                                  <MapPin className="w-3.5 h-3.5" />
+                                  <span className="truncate max-w-[180px]">
+                                    {post.cafe_address ?? "주소 미정"}
+                                  </span>
+                                </div>
+                              </div>
+                              <Badge className={statusStyle[post.status]}>
+                                {statusLabel[post.status] || post.status}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4 text-sm text-gray-600">
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5" />
+                                  {formatWorkDate(post)}
+                                </span>
+                                <span>
+                                  {post.start_time && post.end_time
+                                    ? `${post.start_time} - ${post.end_time}`
+                                    : "시간 미정"}
+                                </span>
+                                <span className="text-sm text-gray-500">
+                                  지원 {applicationCounts.get(post.id) || 0}명
                                 </span>
                               </div>
+                              <ChevronRight
+                                className={`w-5 h-5 ${
+                                  isPast ? "text-gray-300" : "text-gray-400"
+                                }`}
+                              />
                             </div>
-                            <Badge className={statusStyle[post.status]}>
-                              {statusLabel[post.status] || post.status}
-                            </Badge>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4 text-sm text-gray-600">
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5" />
-                                {formatWorkDate(post)}
-                              </span>
-                              <span>
-                                {post.start_time && post.end_time
-                                  ? `${post.start_time} - ${post.end_time}`
-                                  : "시간 미정"}
-                              </span>
-                              <span className="text-sm text-gray-500">
-                                지원 {applicationCounts.get(post.id) || 0}명
-                              </span>
-                            </div>
-                            <ChevronRight className="w-5 h-5 text-gray-400" />
-                          </div>
-                        </div>
-                      </Link>
-                    </motion.div>
-                  ))}
+                        </Link>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               )}
             </div>

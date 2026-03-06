@@ -20,6 +20,7 @@ import FaqPage from "./pages/mypage/policy/faq";
 import MarketingPolicy from "./pages/mypage/policy/marketing";
 import PrivacyPolicy from "./pages/mypage/policy/privacy";
 import TermsPolicy from "./pages/mypage/policy/terms";
+import FeatureRequest from "./pages/mypage/policy/Featurerequest";
 import JobCreate from "./pages/owner/JobCreate";
 import JobList from "./pages/owner/JobList";
 import JobManage from "./pages/owner/JobManage";
@@ -77,6 +78,7 @@ export default function App() {
       <Route path="/policy/privacy" element={<PrivacyPolicy />} />
       <Route path="/policy/terms" element={<TermsPolicy />} />
       <Route path="/policy/marketing" element={<MarketingPolicy />} />
+      <Route path="/policy/feature-request" element={<FeatureRequest />} />
       <Route path="/about" element={<AboutNowshot />} />
       <Route path="/faq" element={<FaqPage />} />
 

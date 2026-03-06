@@ -76,8 +76,19 @@ export default function JobPostDetail() {
     return post.work_period_type || "기간 미정";
   }, [post]);
 
+  const isPastPost = useMemo(() => {
+    if (!post) return false;
+    const baseDate = post.work_end_date || post.work_start_date;
+    if (!baseDate) return false;
+    const end = new Date(baseDate);
+    end.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return end < today;
+  }, [post]);
+
   const cafeName = cafe?.name || post?.cafe_name || "카페";
-  const cafeAddress = cafe?.address || post?.cafe_address;
+  const cafeAddress = cafe?.address || post?.cafe_address || "주소 미정";
   const cafeImage = useMemo(() => {
     const photos = cafe?.photos;
     if (photos) {
@@ -167,8 +178,12 @@ export default function JobPostDetail() {
                 <div className="text-xs text-gray-500 mb-1">급여</div>
                 <div className="text-lg font-semibold text-gray-900">
                   {post.work_period_type === "long-term"
-                    ? `${post.monthly_salary ? post.monthly_salary.toLocaleString() : "-"}원`
-                    : `${post.hourly_wage ? post.hourly_wage.toLocaleString() : "-"}원`}
+                    ? post.monthly_salary
+                      ? `${post.monthly_salary.toLocaleString()}원`
+                      : "협의"
+                    : post.hourly_wage
+                    ? `${post.hourly_wage.toLocaleString()}원`
+                    : "협의"}
                 </div>
               </div>
               <div className="bg-gray-50 rounded-2xl p-4">
@@ -262,7 +277,12 @@ export default function JobPostDetail() {
             </div>
 
             <div className="pt-2">
-              {isApplied ? (
+              {isPastPost ? (
+                <div className="w-full h-12 rounded-xl bg-gray-200 text-gray-500 flex items-center justify-center gap-2">
+                  <FileCheck className="w-5 h-5" />
+                  지난 공고
+                </div>
+              ) : isApplied ? (
                 <div className="w-full h-12 rounded-xl bg-gray-200 text-gray-500 flex items-center justify-center gap-2">
                   <FileCheck className="w-5 h-5" />
                   지원 완료

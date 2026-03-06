@@ -222,6 +222,29 @@ export default function BaristaHome() {
     });
   }, [rpcPosts, jobPostsById]);
 
+  const isDateInRange = (date, startDate, endDate) => {
+    const target = new Date(date);
+    target.setHours(0, 0, 0, 0);
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+    if (start) start.setHours(0, 0, 0, 0);
+    if (end) end.setHours(0, 0, 0, 0);
+    if (start && end) return target >= start && target <= end;
+    if (start) return isSameDay(target, start);
+    if (end) return isSameDay(target, end);
+    return false;
+  };
+
+  const isPastPost = (post) => {
+    const baseDate = post.work_end_date || post.work_start_date;
+    if (!baseDate) return false;
+    const end = new Date(baseDate);
+    end.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return end < today;
+  };
+
   const filteredPosts = useMemo(() => {
     let result = mergedPosts; //⭐️ 반드시 rpcPosts 기준
     if (searchQuery) {
@@ -239,9 +262,11 @@ export default function BaristaHome() {
 
     if (selectedDate) {
       result = result.filter((post) => {
-        const dateValue = post.work_start_date || post.work_end_date;
-        if (!dateValue) return false;
-        return isSameDay(new Date(dateValue), selectedDate);
+        return isDateInRange(
+          selectedDate,
+          post.work_start_date,
+          post.work_end_date
+        );
       });
     }
 
@@ -275,7 +300,15 @@ export default function BaristaHome() {
       });
     }
 
-    return result;
+    return result
+      .slice()
+      .sort((a, b) => {
+        const aDate = a.work_start_date || a.work_end_date;
+        const bDate = b.work_start_date || b.work_end_date;
+        const aTime = aDate ? new Date(aDate).getTime() : 0;
+        const bTime = bDate ? new Date(bDate).getTime() : 0;
+        return bTime - aTime;
+      });
   }, [mergedPosts, searchQuery, selectedDate, detailedFilters, profile]); // ✅ 수정됨
 
   const getCafeImage = (post) => {
@@ -407,6 +440,7 @@ export default function BaristaHome() {
                 </div>
               </div>
             </div>
+            {/*
             <div className="mt-6 space-y-2">
               {rpcPosts.map((post) => {
                 const displayPost = jobPostsById[post.id] || post;
@@ -423,10 +457,12 @@ export default function BaristaHome() {
                 );
               })}
             </div>
+            */}
 
 
             {/* Filters */}
             <div className="space-y-4">
+              {/*
               <Button
                 variant="outline"
                 className="w-full h-12 rounded-xl"
@@ -434,6 +470,7 @@ export default function BaristaHome() {
               >
                 주소로 거리 설정
               </Button>
+              */}
               {/* Date Filter */}
               <div>
                 <div className="flex items-center justify-between mb-3">
@@ -473,6 +510,7 @@ export default function BaristaHome() {
               filters={detailedFilters}
               onApply={setDetailedFilters}
             />
+            {/*
             <AddressSearchModal
               open={showAddressModal}
               onClose={() => setShowAddressModal(false)}
@@ -483,13 +521,14 @@ export default function BaristaHome() {
                 });
               }}
             />
+            */}
 
             <div>
               <h2 className="font-semibold text-gray-900 mb-3">
-                공고 {rpcPosts.length}건
+                공고 {filteredPosts.length}건
               </h2>
 
-              {rpcPosts.length === 0 ? ( // ✅ 수정됨
+              {filteredPosts.length === 0 ? ( // ✅ 수정됨
                 <div className="bg-white rounded-2xl p-8 text-center">
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                     <Briefcase className="w-8 h-8 text-gray-400" />
@@ -498,8 +537,9 @@ export default function BaristaHome() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {rpcPosts.map((post, index) => {
+                  {filteredPosts.map((post, index) => {
                     const displayPost = jobPostsById[post.id] || post;
+                    const isPast = isPastPost(displayPost);
                     return (
                     <motion.div
                       key={post.id}
@@ -508,7 +548,11 @@ export default function BaristaHome() {
                       transition={{ delay: index * 0.05 }}
                     >
                       <Link to={`/barista/baristadetail/${post.id}`}>
-                        <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                        <div
+                          className={`bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow ${
+                            isPast ? "opacity-60 grayscale" : ""
+                          }`}
+                        >
                           {getCafeImage(displayPost) ? (
                             <div className="h-32 overflow-hidden">
                               <img
@@ -532,6 +576,11 @@ export default function BaristaHome() {
                                   <h3 className="font-semibold text-gray-900">
                                     {displayPost.cafe_name}
                                   </h3>
+                                  {isPast && (
+                                    <Badge className="bg-gray-200 text-gray-600 text-xs">
+                                      지난공고
+                                    </Badge>
+                                  )}
                                   {appliedPostIds.includes(post.id) && (
                                     <Badge className="bg-blue-100 text-blue-700 text-xs">
                                       지원완료
@@ -541,15 +590,19 @@ export default function BaristaHome() {
                                 <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
                                   <MapPin className="w-3.5 h-3.5" />
                                   <span className="truncate max-w-[200px]">
-                                    {displayPost.cafe_address}
+                                    {displayPost.cafe_address || "주소 미정"}
                                   </span>
                                 </div>
                               </div>
                               <div className="text-right">
                                 <p className="font-bold text-[#1FBECC]">
                                   {displayPost.work_period_type === "long-term"
-                                    ? `${displayPost.monthly_salary?.toLocaleString()}원`
-                                    : `${displayPost.hourly_wage?.toLocaleString()}원`}
+                                    ? displayPost.monthly_salary
+                                      ? `${displayPost.monthly_salary.toLocaleString()}원`
+                                      : "협의"
+                                    : displayPost.hourly_wage
+                                    ? `${displayPost.hourly_wage.toLocaleString()}원`
+                                    : "협의"}
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {displayPost.work_period_type === "long-term"

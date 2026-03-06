@@ -45,6 +45,16 @@ const BENEFIT_LABELS = {
   uniform: "근무복 지급",
 };
 
+const isPastPost = (post) => {
+  const baseDate = post.work_end_date || post.work_start_date;
+  if (!baseDate) return false;
+  const end = new Date(baseDate);
+  end.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return end < today;
+};
+
 export default function JobManage() {
   const supabase = getSupabase();
   const navigate = useNavigate();
@@ -72,8 +82,19 @@ export default function JobManage() {
         return;
       }
 
-      setJob(postRow);
-      setStatus(postRow.status ?? "open");
+      const nextStatus =
+        postRow.status === "open" && isPastPost(postRow)
+          ? "closed"
+          : postRow.status ?? "open";
+      if (nextStatus !== postRow.status) {
+        await supabase
+          .from("job_posts")
+          .update({ status: nextStatus })
+          .eq("id", id);
+      }
+
+      setJob({ ...postRow, status: nextStatus });
+      setStatus(nextStatus);
 
       if (postRow?.cafe_id) {
         const { data: cafeRow, error: cafeError } = await supabase
@@ -190,7 +211,7 @@ export default function JobManage() {
   }, [job]);
 
   const cafeName = cafe?.name || job?.cafe_name || "카페";
-  const cafeAddress = cafe?.address || job?.cafe_address;
+  const cafeAddress = cafe?.address || job?.cafe_address || "주소 미정";
   const cafeImage = useMemo(() => {
     const photos = cafe?.photos;
     if (!photos) return null;
@@ -359,8 +380,12 @@ export default function JobManage() {
                   <div className="text-xs text-gray-500 mb-1">급여</div>
                   <div className="text-lg font-semibold text-gray-900">
                     {job.work_period_type === "long-term"
-                      ? `${job.monthly_salary?.toLocaleString()}원`
-                      : `${job.hourly_wage?.toLocaleString()}원`}
+                      ? job.monthly_salary
+                        ? `${job.monthly_salary.toLocaleString()}원`
+                        : "협의"
+                      : job.hourly_wage
+                      ? `${job.hourly_wage.toLocaleString()}원`
+                      : "협의"}
                   </div>
                 </div>
                 <div className="bg-gray-50 rounded-2xl p-4">

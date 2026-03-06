@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Coffee,
   FileText,
+  Lightbulb,
   LogOut,
   PencilLine,
   Star,
@@ -97,6 +98,7 @@ export default function BaristaMyPage() {
     },
     { icon: User, label: "프로필 보기", path: "/barista/profile" },
     { icon: PencilLine, label: "프로필 수정", path: "/barista/profile/edit" },
+    { icon: Lightbulb, label: "기능 요청", path: "/policy/feature-request" },
   ];
 
   return (

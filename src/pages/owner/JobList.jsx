@@ -52,6 +52,16 @@ const formatWorkDate = (post) => {
   return "일정 미정";
 };
 
+const isPastPost = (post) => {
+  const baseDate = post.work_end_date || post.work_start_date;
+  if (!baseDate) return false;
+  const end = new Date(baseDate);
+  end.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return end < today;
+};
+
 export default function JobList() {
   const supabase = getSupabase();
   const navigate = useNavigate();
@@ -97,7 +107,24 @@ export default function JobList() {
         .eq("owner_email", ownerEmail)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      const list = data ?? [];
+      const expired = list.filter(
+        (post) => post.status === "open" && isPastPost(post)
+      );
+      if (expired.length > 0) {
+        await supabase
+          .from("job_posts")
+          .update({ status: "closed" })
+          .in(
+            "id",
+            expired.map((post) => post.id)
+          );
+      }
+      return list.map((post) =>
+        post.status === "open" && isPastPost(post)
+          ? { ...post, status: "closed" }
+          : post
+      );
     },
     enabled: !!ownerEmail,
   });
@@ -140,8 +167,18 @@ export default function JobList() {
     return map;
   }, [applications]);
 
+  const normalizedJobs = useMemo(
+    () =>
+      jobPosts.map((post) =>
+        isPastPost(post) && post.status === "open"
+          ? { ...post, status: "closed" }
+          : post
+      ),
+    [jobPosts]
+  );
+
   const filteredJobs = useMemo(() => {
-    let list = [...jobPosts];
+    let list = [...normalizedJobs];
     if (statusFilter !== "all") {
       list = list.filter((post) => post.status === statusFilter);
     }
@@ -151,11 +188,21 @@ export default function JobList() {
     if (cafeFilter !== "all") {
       list = list.filter((post) => post.cafe_id === cafeFilter);
     }
-    return list;
-  }, [jobPosts, statusFilter, periodFilter, cafeFilter]);
+    return list.sort((a, b) => {
+      const aTime = a.work_start_date
+        ? new Date(a.work_start_date).getTime()
+        : 0;
+      const bTime = b.work_start_date
+        ? new Date(b.work_start_date).getTime()
+        : 0;
+      return bTime - aTime;
+    });
+  }, [normalizedJobs, statusFilter, periodFilter, cafeFilter]);
 
-  const totalCount = jobPosts.length;
-  const openCount = jobPosts.filter((post) => post.status === "open").length;
+  const totalCount = normalizedJobs.length;
+  const openCount = normalizedJobs.filter(
+    (post) => post.status === "open" && !isPastPost(post)
+  ).length;
   const pendingCount = applications.filter(
     (app) => app.status === "pending"
   ).length;
@@ -294,10 +341,13 @@ export default function JobList() {
                     total: 0,
                     pending: 0,
                   };
+                  const isPast = isPastPost(post);
                   return (
                     <div
                       key={post.id}
-                      className="bg-white rounded-2xl p-4 shadow-sm"
+                      className={`bg-white rounded-2xl p-4 shadow-sm ${
+                        isPast ? "opacity-60 grayscale" : ""
+                      }`}
                     >
                       <div className="flex flex-col gap-4 md:flex-row md:items-center">
                         {imageUrl ? (
@@ -347,11 +397,17 @@ export default function JobList() {
                         <div className="flex items-center justify-end gap-2 md:flex-col md:items-end">
                           <Link
                             to={`/owner/jobs/${post.id}`}
-                            className="text-sm text-[#1FBECC] font-medium"
+                            className={`text-sm font-medium ${
+                              isPast ? "text-gray-400 pointer-events-none" : "text-[#1FBECC]"
+                            }`}
                           >
                             관리하기
                           </Link>
-                          <ChevronRight className="w-5 h-5 text-gray-300" />
+                          <ChevronRight
+                            className={`w-5 h-5 ${
+                              isPast ? "text-gray-300" : "text-gray-400"
+                            }`}
+                          />
                         </div>
                       </div>
                     </div>

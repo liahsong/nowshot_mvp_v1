@@ -12,10 +12,22 @@ export default function DateFilter({
   const today = new Date();
   const dates = Array.from({ length: 14 }, (_, i) => addDays(today, i));
 
+  const isDateInRange = (date, startDate, endDate) => {
+    const target = new Date(date);
+    target.setHours(0, 0, 0, 0);
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+    if (start) start.setHours(0, 0, 0, 0);
+    if (end) end.setHours(0, 0, 0, 0);
+    if (start && end) return target >= start && target <= end;
+    if (start) return isSameDay(target, start);
+    if (end) return isSameDay(target, end);
+    return false;
+  };
+
   const getJobCountForDate = (date) => {
     return jobPosts.filter((post) => {
-      const postDate = post.work_start_date || post.work_date;
-      return postDate && isSameDay(new Date(postDate), date);
+      return isDateInRange(date, post.work_start_date, post.work_end_date);
     }).length;
   };
 

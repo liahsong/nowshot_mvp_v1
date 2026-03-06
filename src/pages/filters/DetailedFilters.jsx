@@ -120,36 +120,38 @@ export default function DetailedFilters({ open, onOpenChange, filters, onApply }
         </DialogHeader>
 
         <div className="space-y-6 py-2">
+          {/*
           <div className="bg-gray-50 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <MapPin className="w-4 h-4 text-[#1FBECC]" />
               <Label className="text-sm font-semibold">거리</Label>
             </div>
             <p className="text-sm font-semibold text-gray-900 mb-3">
-          내 위치로부터 {localFilters.maxDistanceKm}km 안의 카페공고
-           </p>
-              <Slider
-                value={[localFilters.maxDistanceKm]}
-                onValueChange={(value) =>
-                  setLocalFilters({
-                    ...localFilters,
-                    maxDistanceKm: clampNumber(
-                      Number(value?.[0] ?? DEFAULT_DISTANCE),
-                      DISTANCE_MIN,
-                      DISTANCE_MAX
-                    ),
-                  })
-                }
-                min={DISTANCE_MIN}
-                max={DISTANCE_MAX}
-                step={1}
-              />
-          
+              내 위치로부터 {localFilters.maxDistanceKm}km 안의 카페공고
+            </p>
+            <Slider
+              value={[localFilters.maxDistanceKm]}
+              onValueChange={(value) =>
+                setLocalFilters({
+                  ...localFilters,
+                  maxDistanceKm: clampNumber(
+                    Number(value?.[0] ?? DEFAULT_DISTANCE),
+                    DISTANCE_MIN,
+                    DISTANCE_MAX
+                  ),
+                })
+              }
+              min={DISTANCE_MIN}
+              max={DISTANCE_MAX}
+              step={1}
+            />
+
             <div className="flex justify-between text-sm font-semibold text-gray-900">
               <span>1km</span>
               <span>15km</span>
             </div>
           </div>
+          */}
 
           <div className="bg-gray-50 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
