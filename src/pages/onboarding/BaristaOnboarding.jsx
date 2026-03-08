@@ -351,7 +351,7 @@ export default function BaristaOnboarding() {
         <div className="flex items-center gap-4">
           <button
             onClick={() =>
-              step > 1 ? setStep(step - 1) : navigate("/role")
+              step > 1 ? setStep(step - 1) : navigate("/role?reset=1")
             }
             className="p-2 -ml-2"
           >

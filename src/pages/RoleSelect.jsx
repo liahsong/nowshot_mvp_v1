@@ -1,5 +1,5 @@
 import { ArrowRight } from "lucide-react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { getSupabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { useEffect, useState } from "react";
@@ -7,21 +7,23 @@ import { useEffect, useState } from "react";
 export default function RoleSelect() {
   const supabase = getSupabase();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, role, onboardingCompleted, loading: authLoading, refetchProfile } =
     useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const allowReselect = new URLSearchParams(location.search).get("reset") === "1";
 
   useEffect(() => {
     if (authLoading || !user) return;
-    if (role && role !== "pending" && role !== "member") {
+    if (!allowReselect && role && role !== "pending" && role !== "member") {
       if (onboardingCompleted) {
         navigate(`/${role}`, { replace: true });
       } else {
         navigate(`/onboarding/${role}`, { replace: true });
       }
     }
-  }, [authLoading, user, role, onboardingCompleted, navigate]);
+  }, [authLoading, user, role, onboardingCompleted, navigate, allowReselect]);
 
   if (authLoading) {
     return (
@@ -31,7 +33,7 @@ export default function RoleSelect() {
     );
   }
 
-  if (user && role && role !== "pending" && role !== "member") {
+  if (!allowReselect && user && role && role !== "pending" && role !== "member") {
     return (
       <Navigate
         to={onboardingCompleted ? `/${role}` : `/onboarding/${role}`}
